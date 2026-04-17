@@ -399,7 +399,7 @@ function checkBroadband(coverage: BroadbandCoverage | null, postcode: string): C
       summary: 'Check broadband availability before committing',
       detail: `Broadband data could not be retrieved automatically. Visit the Ofcom broadband checker to see what speeds are available at this postcode. Poor connectivity can significantly affect daily life and property value — especially important for remote workers.`,
       estimatedCostLow: 0, estimatedCostHigh: 0,
-      actionRequired: `Check broadband at checker.ofcom.org.uk before making an offer`,
+      actionRequired: `Check broadband availability: ${checkUrl}`,
       grants: [],
     }
   }
@@ -586,7 +586,7 @@ function checkPlanning(planning: PlanningSummary | null): CheckResult {
   }
 }
 
-function checkCouncilTax(info: CouncilTaxInfo | null, postcode: string): CheckResult {
+function checkCouncilTax(info: CouncilTaxInfo | null, _postcode: string): CheckResult {
   const voaUrl = info?.voaLookupUrl ?? 'https://www.tax.service.gov.uk/check-your-council-tax-band/search'
 
   if (!info) {
@@ -597,7 +597,7 @@ function checkCouncilTax(info: CouncilTaxInfo | null, postcode: string): CheckRe
       summary: 'Check your band at voa.gov.uk',
       detail: `Council tax can add £1,200–£4,000+ per year to your ownership costs. Look up the property's exact band on the Valuation Office Agency (VOA) website. Around 400,000 properties in England are believed to be in the wrong band — you can challenge it.`,
       estimatedCostLow: 0, estimatedCostHigh: 0,
-      actionRequired: 'Check the council tax band at tax.service.gov.uk/check-your-council-tax-band',
+      actionRequired: `Check the council tax band: ${voaUrl}`,
       grants: [],
     }
   }
@@ -612,7 +612,7 @@ function checkCouncilTax(info: CouncilTaxInfo | null, postcode: string): CheckRe
     summary: `Average Band D: £${bandDRate?.toLocaleString() ?? '–'}/year — verify the exact band before buying`,
     detail: `In ${info.localAuthority}, the average Band D council tax is approximately £${bandDRate?.toLocaleString() ?? '–'}/year.${bandRates ? ` Estimated annual costs: Band A £${bandRates.A?.toLocaleString()}, Band C £${bandRates.C?.toLocaleString()}, Band E £${bandRates.E?.toLocaleString()}, Band G £${bandRates.G?.toLocaleString()}.` : ''} Look up the exact band on the VOA website — around 400,000 English properties are incorrectly banded. ${info.appealDeadlineNote}`,
     estimatedCostLow: 0, estimatedCostHigh: 0,
-    actionRequired: `Look up this property's exact band at the VOA checker and compare against neighbours`,
+    actionRequired: `Look up this property's exact band at ${voaUrl} and compare against neighbours`,
     grants: [],
   }
 }

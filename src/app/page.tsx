@@ -54,7 +54,7 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
       </h1>
 
       <p className="fade-up-d2" style={{ fontSize: 18, color: 'var(--slate-600)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}>
-        PropPilot tells you what your home is worth, what's likely to break, when to remortgage, and exactly what it'll cost to reach EPC Band C — all in one place.
+        PropPilot tells you what your home is worth, what&apos;s likely to break, when to remortgage, and exactly what it&apos;ll cost to reach EPC Band C — all in one place.
       </p>
 
       {submitted ? (
