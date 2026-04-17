@@ -5,6 +5,16 @@ import { NavBar } from '../components/NavBar'
 
 const tools = [
   {
+    href:        '/tools/property-report',
+    icon:        '🔍',
+    title:       'Property Due Diligence Report',
+    description: 'Enter an address and postcode to automatically check flood risk, EPC rating, crime stats, broadband speed, and council tax — and download a PDF report.',
+    tag:         'Automated checks',
+    tagColor:    '#f0fdf4',
+    tagBorder:   '#86efac',
+    tagText:     '#14532d',
+  },
+  {
     href:        '/tools/stamp-duty',
     icon:        '🏷️',
     title:       'Stamp Duty Calculator',
