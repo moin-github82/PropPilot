@@ -586,8 +586,8 @@ function checkPlanning(planning: PlanningSummary | null): CheckResult {
   }
 }
 
-function checkCouncilTax(info: CouncilTaxInfo | null, _postcode: string): CheckResult {
-  const voaUrl = info?.voaLookupUrl ?? 'https://www.tax.service.gov.uk/check-your-council-tax-band/search'
+function checkCouncilTax(info: CouncilTaxInfo | null, postcode: string): CheckResult {
+  const voaUrl = info?.voaLookupUrl ?? `https://www.tax.service.gov.uk/check-your-council-tax-band/search?postcode=${encodeURIComponent(postcode)}`
 
   if (!info) {
     return {

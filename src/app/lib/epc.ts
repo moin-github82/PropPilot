@@ -324,6 +324,7 @@ const UPGRADE_RULES: UpgradeRule[] = [
 export function getUpgradeRecommendations(cert: EPCCertificate): UpgradeRecommendation[] {
   return UPGRADE_RULES
     .filter(rule => rule.check(cert))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ id: _id, check: _check, ...rest }) => rest)
     .sort((a, b) => {
       const order = { high: 0, medium: 1, low: 2 }

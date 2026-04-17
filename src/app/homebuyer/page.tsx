@@ -80,7 +80,7 @@ function SearchForm({ onSubmit, loading }: {
           Is this property hiding any nasty surprises?
         </h1>
         <p style={{ fontSize: 16, color: '#5e5a52', lineHeight: 1.7, maxWidth: 520, margin: 0 }}>
-          Enter the property details and we'll run 8 automated checks — EPC rating, maintenance costs, flood risk, price history and more — so you know the true cost of ownership before you make an offer.
+          Enter the property details and we&apos;ll run 8 automated checks — EPC rating, maintenance costs, flood risk, price history and more — so you know the true cost of ownership before you make an offer.
         </p>
       </div>
 
