@@ -11,20 +11,22 @@ function Nav() {
     <NavBar
       rightSlot={<>
         <Link href="#features" style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Features</Link>
-        <Link href="#pricing"  style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Pricing</Link>
+        <Link href="/pricing"  style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Pricing</Link>
         <Link href="/tools"    style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Tools</Link>
         <Link href="/homebuyer" style={{ fontSize: 14, fontWeight: 500, color: '#1D9E75', textDecoration: 'none', background: '#e8f8f3', padding: '6px 14px', borderRadius: '8px', border: '1px solid #9fe1cb' }}>
           Buying? Check a property
         </Link>
-        <Link href="/login" style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none', padding: '6px 14px' }}>Sign in</Link>
+        <Link href="/login"  style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none', padding: '6px 14px' }}>Sign in</Link>
+        <Link href="/signup" style={{ fontSize: 14, fontWeight: 500, color: '#fff', background: '#1a1917', textDecoration: 'none', padding: '7px 16px', borderRadius: 8 }}>Sign up</Link>
         <a href="#waitlist" className="btn-primary" style={{ padding: '9px 20px', fontSize: 14 }}>Join waitlist</a>
       </>}
       mobileItems={[
         { label: 'Features',              href: '#features'  },
-        { label: 'Pricing',               href: '#pricing'   },
+        { label: 'Pricing',               href: '/pricing'   },
         { label: 'Tools',                 href: '/tools'     },
         { label: 'Buying? Check a property', href: '/homebuyer' },
         { label: 'Sign in',               href: '/login'     },
+        { label: 'Sign up',               href: '/signup'    },
         { label: 'Join waitlist',         href: '#waitlist'  },
       ]}
     />

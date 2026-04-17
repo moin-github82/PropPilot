@@ -711,6 +711,8 @@ export default function DashboardPage() {
   const loadState = useCallback(() => {
     const u = getUser()
     if (!u) { router.replace('/login'); return }
+    // Buyers have their own dashboard
+    if (u.role === 'buyer') { router.replace('/dashboard/buyer'); return }
     setUser(u)
     const p = getProperty()
     setProperty(p)
