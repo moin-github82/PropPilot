@@ -173,7 +173,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
           Add your property
         </h2>
         <p style={{ fontSize: 14, color: 'var(--slate-500)', maxWidth: 400, margin: '0 auto' }}>
-          We'll use this to personalise your dashboard and keep track of everything in one place.
+          We&apos;ll use this to personalise your dashboard and keep track of everything in one place.
         </p>
       </div>
 
@@ -387,7 +387,6 @@ function RemortgageCard({ property }: { property: StoredProperty }) {
   const isPast   = days < 0
   const isUrgent = !isPast && days < 90
   const isWindow = !isPast && days >= 90 && days <= 180
-  const isEarly  = !isPast && days > 180
 
   const statusColor = isPast ? '#ef4444' : isUrgent ? '#ef4444' : isWindow ? '#f59e0b' : 'var(--brand-400)'
   const statusLabel = isPast ? 'Deal expired — act now' : isUrgent ? 'Act now — switch imminent' : isWindow ? 'Ideal switch window' : 'Tracking — not yet time'
@@ -558,7 +557,7 @@ function EPCUpgradeBanner({ property }: { property: StoredProperty }) {
         <div>
           <span style={{ fontSize: 13, fontWeight: 500, color: '#16a34a' }}>✓ EPC Band {band} — 2030 target met</span>
           <p style={{ fontSize: 14, color: '#15803d', margin: '4px 0 0' }}>
-            Your property already meets the government's Band C standard. You may still benefit from further improvements.
+            Your property already meets the government&apos;s Band C standard. You may still benefit from further improvements.
           </p>
         </div>
         <Link href="/dashboard/epc-upgrade" className="btn-ghost" style={{ fontSize: 13, padding: '8px 16px', whiteSpace: 'nowrap', flexShrink: 0 }}>

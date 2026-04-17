@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { geocodePostcode } from '../../../lib/geocode'
 import { getCrimeData } from '../../../lib/crime'
-import { withCache, CacheKey, TTL } from '../../../lib/cache'
+import { withCache, TTL } from '../../../lib/cache'
 
 export async function GET(
   _req: NextRequest,
