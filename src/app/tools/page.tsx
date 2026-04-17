@@ -44,6 +44,16 @@ const tools = [
     tagBorder:   '#7dd3fc',
     tagText:     '#0c4a6e',
   },
+  {
+    href:        '/tools/checklist',
+    icon:        '🧾',
+    title:       'Property Buying Checklists',
+    description: 'Interactive checklists for every buyer type — full UK buying guide, first-time buyer checklist, buy-to-let investor checklist, and a property risk scoring matrix.',
+    tag:         'Free tool',
+    tagColor:    '#f0fdf4',
+    tagBorder:   '#86efac',
+    tagText:     '#14532d',
+  },
 ]
 
 export default function ToolsPage() {
