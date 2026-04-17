@@ -595,30 +595,29 @@ export default function PropertyReportPage() {
                 </div>
               )}
 
-              {/* Remaining manual checks reminder */}
+              {/* ── Premium Professional Services ── */}
+              <PremiumServices postcode={report.postcode} address={report.address} />
+
+              {/* Remaining self-check items */}
               <div style={{ ...card, background: '#f8f7f4', border: '1px solid #e2ddd6' }} className="print-card">
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 10px' }}>📋 Remaining checks to do manually</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 10px' }}>📋 Other checks to do yourself</p>
                 <p style={{ fontSize: 12, color: '#5e5a52', margin: '0 0 12px', lineHeight: 1.6 }}>
-                  This report covers data that can be checked automatically. The following still require you to visit the property and instruct professionals:
+                  These items require a physical visit or further research — no professional needed:
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 6 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 6 }}>
                   {[
-                    '⚖️ Title register & legal checks (solicitor)',
-                    '🏗️ Structural survey (RICS Level 2 or 3)',
-                    '🔥 Gas Safety Certificate',
-                    '⚡ EICR electrical report',
-                    '🪟 Damp, mould & window seals (viewing)',
-                    '📋 Lease terms if leasehold (solicitor)',
-                    '🏘️ Neighbourhood visit at different times',
-                    '🤝 Comparable sold prices check',
+                    '🪟 Check for damp, mould & window seals during viewing',
+                    '📋 Review lease terms if leasehold (ask your solicitor)',
+                    '🏘️ Visit the neighbourhood at different times of day',
+                    '🤝 Research comparable sold prices on Rightmove',
                   ].map(item => (
                     <div key={item} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 12, color: '#5e5a52', lineHeight: 1.5 }}>{item}</span>
+                      <span style={{ fontSize: 12, color: '#5e5a52', lineHeight: 1.6 }}>{item}</span>
                     </div>
                   ))}
                 </div>
                 <p style={{ fontSize: 12, color: '#9e998f', margin: '14px 0 0', lineHeight: 1.5 }}>
-                  Use our <Link href="/tools/checklist" style={{ color: '#1D9E75' }}>full property buying checklist</Link> to track all of these alongside your automated checks.
+                  Use our <Link href="/tools/checklist" style={{ color: '#1D9E75' }}>full property buying checklist</Link> to track every step of your purchase.
                 </p>
               </div>
 
@@ -631,6 +630,196 @@ export default function PropertyReportPage() {
         </main>
       </div>
     </>
+  )
+}
+
+// ─── Premium Services component ───────────────────────────────────────────────
+
+interface PremiumService {
+  icon:        string
+  title:       string
+  subtitle:    string
+  description: string
+  includes:    string[]
+  typicalCost: string
+  timeline:    string
+  why:         string
+}
+
+const PREMIUM_SERVICES: PremiumService[] = [
+  {
+    icon:        '⚖️',
+    title:       'Title Register & Legal Checks',
+    subtitle:    'Conveyancing solicitor review',
+    description: 'A PropPilot-vetted conveyancing solicitor reviews the official title register, checks for restrictive covenants, boundary disputes, planning enforcement notices, and any charges or restrictions on the property.',
+    includes:    [
+      'Official title register & title plan (HMLR)',
+      'Restrictive covenants & easements review',
+      'Local Authority & drainage searches',
+      'Planning & building regulations check',
+      'Boundary & rights of way verification',
+      'Written legal summary report',
+    ],
+    typicalCost: '£800 – £1,500',
+    timeline:    '5–10 working days',
+    why:         'Legal issues are the most common cause of aborted purchases. Catching a covenant or boundary problem early saves thousands.',
+  },
+  {
+    icon:        '🏗️',
+    title:       'Structural Survey',
+    subtitle:    'RICS Level 2 or Level 3',
+    description: 'A RICS-accredited surveyor carries out a full inspection of the property — roof, walls, foundations, drainage, electrics, and more. You receive a detailed written report with condition ratings and cost estimates for any defects found.',
+    includes:    [
+      'Full inspection of roof, walls & foundations',
+      'Damp, mould & timber condition assessment',
+      'Boiler, heating & plumbing overview',
+      'Electrical consumer unit check',
+      'Loft, drainage & external inspection',
+      'Condition ratings (1–3) with cost estimates',
+    ],
+    typicalCost: '£500 – £1,500',
+    timeline:    '3–5 working days after inspection',
+    why:         'A £600 survey can save you from buying a property with £30,000 of hidden defects. Never rely on the mortgage lender\'s valuation alone.',
+  },
+  {
+    icon:        '🔥',
+    title:       'Gas Safety Certificate',
+    subtitle:    'CP12 — Gas Safe registered engineer',
+    description: 'A Gas Safe registered engineer inspects and tests all gas appliances, pipework, and the boiler at the property. You receive a CP12 certificate — legally required for lettings and essential for any purchase with gas.',
+    includes:    [
+      'Boiler inspection & flue test',
+      'All gas appliances checked & tested',
+      'Gas pipework pressure test',
+      'Carbon monoxide risk assessment',
+      'CP12 certificate issued on the day',
+      'Written defect report if issues found',
+    ],
+    typicalCost: '£60 – £120',
+    timeline:    'Same day or next day',
+    why:         'Faulty gas appliances cause over 40 deaths a year in the UK. A CP12 confirms the property is safe and is required annually for lettings.',
+  },
+  {
+    icon:        '⚡',
+    title:       'EICR Electrical Report',
+    subtitle:    'Electrical Installation Condition Report',
+    description: 'A qualified electrician carries out a full Electrical Installation Condition Report (EICR) on the property\'s wiring, consumer unit, sockets, and fixed appliances. Essential for any purchase — mandatory for all rented properties.',
+    includes:    [
+      'Full inspection of consumer unit (fuse box)',
+      'Wiring condition & earthing check',
+      'All sockets, switches & lighting tested',
+      'RCD protection verification',
+      'Code C1/C2/C3 defect classification',
+      'EICR certificate valid for 5 years',
+    ],
+    typicalCost: '£150 – £300',
+    timeline:    '1–2 working days',
+    why:         'EICRs are mandatory for all rented properties and strongly advised for any purchase. Old wiring is a leading cause of house fires.',
+  },
+]
+
+function PremiumServices({ postcode, address }: { postcode: string; address: string }) {
+  const enquiryBase = `/?ref=property-report&postcode=${encodeURIComponent(postcode)}${address ? `&address=${encodeURIComponent(address)}` : ''}`
+
+  return (
+    <div style={{ marginBottom: 16 }} className="print-card">
+      {/* Section header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1a1917 0%, #2d2b28 100%)',
+        borderRadius: '14px 14px 0 0',
+        padding: '20px 24px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f59e0b' }}>PropPilot Premium</span>
+            <span style={{ fontSize: 11, background: '#f59e0b', color: '#1a1917', borderRadius: 20, padding: '1px 8px', fontWeight: 700 }}>Add-on services</span>
+          </div>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: '#fff', margin: 0 }}>
+            Professional checks for this property
+          </p>
+        </div>
+        <Link href="/#pricing" style={{ height: 38, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#f59e0b', color: '#1a1917', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+          View plans →
+        </Link>
+      </div>
+
+      {/* Service cards */}
+      <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderTop: 'none', borderRadius: '0 0 14px 14px', overflow: 'hidden' }}>
+        {PREMIUM_SERVICES.map((svc, idx) => (
+          <div key={svc.title} style={{
+            padding: '22px 24px',
+            borderBottom: idx < PREMIUM_SERVICES.length - 1 ? '1px solid #f0ede8' : 'none',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto',
+            gap: '16px 24px',
+            alignItems: 'start',
+          }}>
+            {/* Left: content */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 22 }}>{svc.icon}</span>
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: '#1a1917', margin: 0 }}>{svc.title}</p>
+                  <p style={{ fontSize: 12, color: '#9e998f', margin: 0 }}>{svc.subtitle}</p>
+                </div>
+                <span style={{ fontSize: 11, background: '#fef9c3', color: '#713f12', border: '1px solid #fcd34d', borderRadius: 20, padding: '1px 8px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  🔒 Premium
+                </span>
+              </div>
+
+              <p style={{ fontSize: 13, color: '#5e5a52', lineHeight: 1.6, margin: '0 0 12px' }}>{svc.description}</p>
+
+              {/* Includes list */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: '4px 12px', marginBottom: 12 }}>
+                {svc.includes.map(item => (
+                  <div key={item} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                    <span style={{ color: '#1D9E75', fontSize: 12, flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span style={{ fontSize: 12, color: '#5e5a52', lineHeight: 1.5 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Why this matters */}
+              <div style={{ background: '#f8f7f4', borderRadius: 8, padding: '8px 12px' }}>
+                <p style={{ fontSize: 12, color: '#5e5a52', margin: 0, lineHeight: 1.5 }}>
+                  <strong style={{ color: '#1a1917' }}>Why it matters: </strong>{svc.why}
+                </p>
+              </div>
+            </div>
+
+            {/* Right: price + CTA */}
+            <div style={{ textAlign: 'center', minWidth: 140 }}>
+              <div style={{ background: '#f8f7f4', border: '1px solid #e2ddd6', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
+                <p style={{ fontSize: 11, color: '#9e998f', margin: '0 0 2px' }}>Typical cost</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#1a1917', margin: '0 0 4px' }}>{svc.typicalCost}</p>
+                <p style={{ fontSize: 11, color: '#9e998f', margin: 0 }}>⏱ {svc.timeline}</p>
+              </div>
+              <Link
+                href={`${enquiryBase}&service=${encodeURIComponent(svc.title)}`}
+                style={{
+                  display: 'block', width: '100%', padding: '10px 0', fontSize: 13, fontWeight: 600,
+                  background: '#1D9E75', color: '#fff', borderRadius: 8, textDecoration: 'none',
+                  textAlign: 'center',
+                }}
+              >
+                Get a quote →
+              </Link>
+              <p style={{ fontSize: 11, color: '#9e998f', margin: '6px 0 0' }}>PropPilot-vetted professionals</p>
+            </div>
+          </div>
+        ))}
+
+        {/* Footer CTA */}
+        <div style={{ background: '#f8f7f4', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <p style={{ fontSize: 13, color: '#5e5a52', margin: 0 }}>
+            Get all four professional checks bundled — and save vs. booking separately.
+          </p>
+          <Link href="/#pricing" style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#1a1917', color: '#fff', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            See bundle pricing →
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
 
