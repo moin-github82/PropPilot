@@ -4,9 +4,25 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { NavBar } from '../components/NavBar'
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Plan {
+  name: string
+  price: string
+  period: string
+  annual?: string | null
+  tag: string | null
+  color: string
+  features: string[]
+  notIncluded: string[]
+  cta: string
+  ctaHref: string
+  ctaStyle: string
+}
+
 // ─── Plan data ────────────────────────────────────────────────────────────────
 
-const BUYER_PLANS = [
+const BUYER_PLANS: Plan[] = [
   {
     name: 'Free',
     price: '£0',
@@ -79,7 +95,7 @@ const BUYER_PLANS = [
   },
 ]
 
-const OWNER_PLANS = [
+const OWNER_PLANS: Plan[] = [
   {
     name: 'Free',
     price: '£0',
@@ -171,7 +187,7 @@ const FAQS = [
 
 // ─── Plan card ────────────────────────────────────────────────────────────────
 
-function PlanCard({ plan }: { plan: typeof BUYER_PLANS[0] }) {
+function PlanCard({ plan }: { plan: Plan }) {
   const isPopular = plan.tag === 'Most popular'
   return (
     <div style={{
