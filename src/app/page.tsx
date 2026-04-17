@@ -60,7 +60,7 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
       {submitted ? (
         <div className="fade-up card" style={{ maxWidth: 440, margin: '0 auto', background: 'var(--brand-50)', border: '1px solid var(--brand-200)', padding: '20px 24px' }}>
           <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--brand-800)', margin: 0 }}>
-            You're on the list. We'll be in touch soon.
+            You&apos;re on the list. We&apos;ll be in touch soon.
           </p>
         </div>
       ) : (
@@ -211,7 +211,7 @@ function EPCCallout() {
         <div>
           <span className="tag tag-green" style={{ marginBottom: 14, display: 'inline-block' }}>EPC deadline — 2030</span>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 500, color: 'var(--brand-800)', marginBottom: 12 }}>
-            61% of UK homes need to upgrade. Most homeowners don't know where to start.
+            61% of UK homes need to upgrade. Most homeowners don&apos;t know where to start.
           </h2>
           <p style={{ fontSize: 15, color: 'var(--brand-600)', lineHeight: 1.7, margin: 0 }}>
             Lenders are already factoring EPC ratings into mortgage offers. A Band D home today could mean a lower loan-to-value ceiling tomorrow. PropPilot gives you a clear, costed roadmap.
@@ -242,7 +242,7 @@ function Testimonials() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
           {testimonials.map((t, i) => (
             <div key={i} className="card">
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--slate-700)', lineHeight: 1.7, marginBottom: 20, fontStyle: 'italic' }}>"{t.quote}"</p>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--slate-700)', lineHeight: 1.7, marginBottom: 20, fontStyle: 'italic' }}>&ldquo;{t.quote}&rdquo;</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 500, color: 'var(--brand-800)', flexShrink: 0 }}>{t.initials}</div>
                 <div>
@@ -325,7 +325,7 @@ function FinalCTA({ onJoin }: { onJoin: (email: string) => void }) {
           Join 847 UK homeowners already on the waitlist. Free to start, no credit card needed.
         </p>
         {submitted ? (
-          <p style={{ fontSize: 16, color: 'var(--brand-200)', fontWeight: 500 }}>You're on the list. We'll be in touch soon. ✓</p>
+          <p style={{ fontSize: 16, color: 'var(--brand-200)', fontWeight: 500 }}>You&apos;re on the list. We&apos;ll be in touch soon. ✓</p>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 420, margin: '0 auto 12px' }}>
             <input

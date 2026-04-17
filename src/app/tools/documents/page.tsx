@@ -49,37 +49,7 @@ export default function DocumentsPage() {
     } catch {}
   }, [])
 
-  const save = (updated: StoredDocument[]) => {
-    setDocs(updated)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)) } catch {}
-  }
-
-  const processFile = (file: File, cat: string) => {
-    return new Promise<void>((resolve) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const doc: StoredDocument = {
-          id:         crypto.randomUUID(),
-          name:       file.name,
-          category:   cat,
-          uploadedAt: new Date().toISOString(),
-          sizeBytes:  file.size,
-          dataUrl:    reader.result as string,
-          notes:      '',
-        }
-        save(prev => {
-          const updated = [...prev, doc]
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)) } catch {}
-          return updated
-        })
-        resolve()
-      }
-      reader.readAsDataURL(file)
-    })
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const save2 = (updater: any) => {
+  const save2 = (updater: StoredDocument[] | ((prev: StoredDocument[]) => StoredDocument[])) => {
     setDocs(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)) } catch {}
