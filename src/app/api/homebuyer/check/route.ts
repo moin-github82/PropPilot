@@ -17,8 +17,17 @@ import {
 import { getPricePaidByPostcode } from '../../../lib/landRegistry'
 import { generateHomebuyerReport } from '../../../lib/homebuyerCheck'
 import { withCache, CacheKey, TTL } from '../../../lib/cache'
+import { geocodePostcode } from '../../../lib/geocode'
+import { getCrimeData } from '../../../lib/crime'
+import { getBroadbandCoverage, isOfcomConfigured } from '../../../lib/broadband'
+import { getPlanningData } from '../../../lib/planning'
+import { getCouncilTaxInfo } from '../../../lib/councilTax'
 import type { EPCCertificate, UpgradeRecommendation } from '../../../lib/epc'
 import type { PricePaidRecord } from '../../../lib/landRegistry'
+import type { CrimeSummary } from '../../../lib/crime'
+import type { BroadbandCoverage } from '../../../lib/broadband'
+import type { PlanningSummary } from '../../../lib/planning'
+import type { CouncilTaxInfo } from '../../../lib/councilTax'
 
 // ─── Property type helpers ────────────────────────────────────────────────────
 
@@ -124,6 +133,51 @@ async function safePricePaidLookup(postcode: string): Promise<{ records: PricePa
   }
 }
 
+async function safeCrimeLookup(postcode: string): Promise<{ data: CrimeSummary | null; error?: string }> {
+  try {
+    const geo = await geocodePostcode(postcode)
+    if (!geo) return { data: null, error: 'Could not geocode postcode for crime lookup' }
+    const cacheKey = `crime:${postcode.replace(/\s/g, '').toUpperCase()}`
+    const data = await withCache(cacheKey, TTL.LAND_REGISTRY, () => getCrimeData(geo))
+    return { data }
+  } catch (err) {
+    return { data: null, error: `Crime lookup failed: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+async function safeBroadbandLookup(postcode: string): Promise<{ data: BroadbandCoverage | null; error?: string }> {
+  if (!isOfcomConfigured()) return { data: null }
+  try {
+    const cacheKey = `broadband:${postcode.replace(/\s/g, '').toUpperCase()}`
+    const data = await withCache(cacheKey, TTL.EPC_POSTCODE, () => getBroadbandCoverage(postcode))
+    return { data }
+  } catch (err) {
+    return { data: null, error: `Broadband lookup failed: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+async function safePlanningLookup(postcode: string): Promise<{ data: PlanningSummary | null; error?: string }> {
+  try {
+    const geo = await geocodePostcode(postcode)
+    if (!geo) return { data: null, error: 'Could not geocode postcode for planning lookup' }
+    const cacheKey = `planning:${postcode.replace(/\s/g, '').toUpperCase()}`
+    const data = await withCache(cacheKey, TTL.LAND_REGISTRY, () => getPlanningData(geo, postcode))
+    return { data }
+  } catch (err) {
+    return { data: null, error: `Planning lookup failed: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+async function safeCouncilTaxLookup(postcode: string): Promise<{ data: CouncilTaxInfo | null; error?: string }> {
+  try {
+    const geo = await geocodePostcode(postcode)
+    if (!geo) return { data: null, error: 'Could not geocode postcode for council tax lookup' }
+    return { data: getCouncilTaxInfo(geo) }
+  } catch (err) {
+    return { data: null, error: `Council tax lookup failed: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
 function deriveYearBuilt(cert: EPCCertificate | null): number {
   if (!cert) return 1970
   // Use inspection date as a proxy — assume property ~30 years old at inspection
@@ -163,10 +217,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3. Run both lookups in parallel — each isolated so one failure doesn't kill the other
-  const [epcResult, priceResult] = await Promise.all([
+  // 3. Run all lookups in parallel — each isolated so one failure doesn't kill the others
+  const [epcResult, priceResult, crimeResult, broadbandResult, planningResult, councilTaxResult] = await Promise.all([
     safeEPCLookup(postcode, address),
     safePricePaidLookup(postcode),
+    safeCrimeLookup(postcode),
+    safeBroadbandLookup(postcode),
+    safePlanningLookup(postcode),
+    safeCouncilTaxLookup(postcode),
   ])
 
   // 4. If EPC completely failed with auth error — surface it clearly
@@ -190,6 +248,10 @@ export async function POST(req: NextRequest) {
     askingPrice:             askingPrice ?? null,
     yearBuilt,
     comparablePropertyType:  propertyTypeFilter,
+    crime:                   crimeResult.data,
+    broadband:               broadbandResult.data,
+    planning:                planningResult.data,
+    councilTax:              councilTaxResult.data,
   })
 
   return NextResponse.json({
@@ -205,6 +267,10 @@ export async function POST(req: NextRequest) {
       warnings: [
         epcResult.error,
         priceResult.error,
+        crimeResult.error,
+        broadbandResult.error,
+        planningResult.error,
+        councilTaxResult.error,
       ].filter(Boolean),
     },
   })

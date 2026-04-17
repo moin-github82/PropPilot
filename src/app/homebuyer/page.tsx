@@ -40,7 +40,8 @@ function Nav() {
         <span style={{ fontSize: 13, color: '#5e5a52', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20, padding: '4px 12px' }}>
           Homebuyer Check
         </span>
-        <Link href="/" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to home</Link>
+        <Link href="/tools" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>Tools</Link>
+        <Link href="/" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Home</Link>
       </div>
     </nav>
   )

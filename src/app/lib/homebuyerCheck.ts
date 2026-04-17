@@ -13,6 +13,10 @@
 
 import type { EPCCertificate, UpgradeRecommendation } from './epc'
 import type { PricePaidRecord } from './landRegistry'
+import type { CrimeSummary } from './crime'
+import type { BroadbandCoverage } from './broadband'
+import type { PlanningSummary } from './planning'
+import type { CouncilTaxInfo } from './councilTax'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -329,6 +333,290 @@ function checkPriceHistory(
   }
 }
 
+function checkCrime(crime: CrimeSummary | null): CheckResult {
+  if (!crime) {
+    return {
+      id: 'crime',
+      title: 'Crime — data unavailable',
+      status: 'info',
+      summary: 'Check crime statistics via Police.uk',
+      detail: 'Crime data could not be retrieved for this area. Check manually at police.uk/pu/your-area to review local crime statistics.',
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: 'Review crime statistics at police.uk before making an offer',
+      grants: [],
+    }
+  }
+
+  const perMonth = crime.incidentsPerMonth
+  const top      = crime.topCategories[0]?.category ?? 'various'
+
+  if (perMonth >= 100) {
+    return {
+      id: 'crime',
+      title: `Crime — high rate (${perMonth}/month average)`,
+      status: 'fail',
+      summary: `${crime.totalIncidents} incidents in ${crime.monthsAnalysed} months — above average`,
+      detail: `Police.uk recorded ${crime.totalIncidents} crimes in a ~1-mile radius over ${crime.monthsAnalysed} months (avg ${perMonth}/month). Most common: ${top}. High crime areas can affect insurance premiums, resale value, and quality of life. Review the Police.uk neighbourhood profile for more detail.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: 'Visit police.uk/pu/your-area and review the neighbourhood profile before committing',
+      grants: [],
+    }
+  }
+
+  if (perMonth >= 50) {
+    return {
+      id: 'crime',
+      title: `Crime — moderate rate (${perMonth}/month average)`,
+      status: 'warning',
+      summary: `${crime.totalIncidents} incidents in ${crime.monthsAnalysed} months — check the neighbourhood profile`,
+      detail: `Police.uk recorded ${crime.totalIncidents} crimes in a ~1-mile radius over ${crime.monthsAnalysed} months (avg ${perMonth}/month). Most common: ${top}. This is around the national average — visit the Police.uk neighbourhood page to see trends and compare with nearby areas.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: null,
+      grants: [],
+    }
+  }
+
+  return {
+    id: 'crime',
+    title: `Crime — low rate (${perMonth}/month average)`,
+    status: 'pass',
+    summary: `${crime.totalIncidents} incidents in ${crime.monthsAnalysed} months — below average`,
+    detail: `Police.uk recorded ${crime.totalIncidents} crimes in a ~1-mile radius over ${crime.monthsAnalysed} months (avg ${perMonth}/month). Most common: ${top}. This is a relatively low crime area.`,
+    estimatedCostLow: 0, estimatedCostHigh: 0,
+    actionRequired: null,
+    grants: [],
+  }
+}
+
+function checkBroadband(coverage: BroadbandCoverage | null, postcode: string): CheckResult {
+  const checkUrl = `https://checker.ofcom.org.uk/en-gb/broadband-coverage?postcode=${encodeURIComponent(postcode)}`
+
+  if (!coverage) {
+    return {
+      id: 'broadband',
+      title: 'Broadband — verify via Ofcom checker',
+      status: 'info',
+      summary: 'Check broadband availability before committing',
+      detail: `Broadband data could not be retrieved automatically. Visit the Ofcom broadband checker to see what speeds are available at this postcode. Poor connectivity can significantly affect daily life and property value — especially important for remote workers.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Check broadband at checker.ofcom.org.uk before making an offer`,
+      grants: [],
+    }
+  }
+
+  const { technologyType, maxDownloadMbps, gigabitCapable, superfast } = coverage
+
+  if (!superfast || maxDownloadMbps < 10) {
+    return {
+      id: 'broadband',
+      title: `Broadband — slow (max ${maxDownloadMbps} Mbps, ${technologyType})`,
+      status: 'warning',
+      summary: 'Below superfast threshold — may affect remote working and streaming',
+      detail: `The best available broadband at this postcode is ${maxDownloadMbps} Mbps download via ${technologyType}. This is below the "superfast" threshold of 30 Mbps. For home offices, streaming, or families with multiple devices, this may cause frustration. Check whether full-fibre rollout is planned for this area.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: 'Check full-fibre rollout plans via openreach.com/fibre-broadband before committing',
+      grants: [],
+    }
+  }
+
+  const label = gigabitCapable
+    ? `Full-fibre gigabit (${maxDownloadMbps} Mbps)`
+    : `Superfast ${technologyType} (${maxDownloadMbps} Mbps)`
+
+  return {
+    id: 'broadband',
+    title: `Broadband — ${label}`,
+    status: 'pass',
+    summary: gigabitCapable
+      ? 'Full-fibre available — future-proofed for home working'
+      : `Superfast broadband available (${maxDownloadMbps} Mbps max)`,
+    detail: `${label} broadband is available at this postcode.${gigabitCapable ? ' Full-fibre (FTTP) is the gold standard — symmetrical speeds, no degradation at peak times, and future-proofed.' : ' Consider whether full-fibre upgrade is planned for the area.'}`,
+    estimatedCostLow: 0, estimatedCostHigh: 0,
+    actionRequired: null,
+    grants: [],
+  }
+}
+
+function checkPlanning(planning: PlanningSummary | null): CheckResult {
+  if (!planning) {
+    return {
+      id: 'planning',
+      title: 'Planning — check local restrictions manually',
+      status: 'info',
+      summary: 'Check your local council planning portal',
+      detail: 'Planning data could not be retrieved for this postcode. Check the local planning portal to see if there are nearby applications, and verify whether the property is in a conservation area or subject to an Article 4 Direction (which removes permitted development rights).',
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: 'Check your local council planning portal',
+      grants: [],
+    }
+  }
+
+  const {
+    inConservationArea, conservationAreaName,
+    listedBuilding, listedBuildingGrade,
+    articleFourDirection, articleFourDescription,
+    applicationsFound,
+    propertyApplications = [],
+    nearbyApplications   = [],
+    lpaName, lpaSearchUrl, lpaApplicationsUrl,
+  } = planning
+
+  // Restrictions summary for detail text
+  const restrictions: string[] = []
+  if (inConservationArea) restrictions.push(`conservation area${conservationAreaName ? ` (${conservationAreaName})` : ''}`)
+  if (listedBuilding)     restrictions.push(`Grade ${listedBuildingGrade ?? 'II'} listed building`)
+  if (articleFourDirection) restrictions.push(`Article 4 Direction${articleFourDescription ? ` — ${articleFourDescription}` : ''}`)
+
+  // Listed building is the most serious flag — needs its own 'fail' card
+  if (listedBuilding) {
+    return {
+      id: 'planning',
+      title: `Planning — Grade ${listedBuildingGrade ?? 'II'} listed building`,
+      status: 'fail',
+      summary: 'Listed building — all alterations require Listed Building Consent',
+      detail: `This property is a Grade ${listedBuildingGrade ?? 'II'} listed building. Any works to the structure, interior features, or curtilage require Listed Building Consent (LBC) in addition to normal planning permission — and some works are completely prohibited. Unauthorised works are a criminal offence. Maintenance and restoration costs are significantly higher; standard materials (PVC windows, modern insulation) are generally not permitted. Specialist listed building insurance is essential. Check the ${lpaName} planning portal for any enforcement notices.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Instruct a specialist heritage surveyor (RICS or IHBC) before committing. Review ${lpaApplicationsUrl} for enforcement history.`,
+      grants: ['Historic England grants (for Grade I/II* only)', 'Some local authority conservation grants'],
+    }
+  }
+
+  // Conservation area + Article 4 together
+  if (inConservationArea && articleFourDirection) {
+    return {
+      id: 'planning',
+      title: `Planning — conservation area + Article 4 Direction`,
+      status: 'warning',
+      summary: 'Restricted: permitted development rights removed — planning permission needed for most works',
+      detail: `This property sits within a conservation area${conservationAreaName ? ` (${conservationAreaName})` : ''} and is subject to an Article 4 Direction, which removes most permitted development rights. Extensions, loft conversions, replacement windows, and external cladding all require full planning permission. Refusals are more common in conservation areas. This affects what you can do with the property and timeline for any works.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Check approved/refused applications on the ${lpaName} portal to understand what changes are typically permitted`,
+      grants: [],
+    }
+  }
+
+  // Conservation area alone
+  if (inConservationArea) {
+    return {
+      id: 'planning',
+      title: `Planning — conservation area${conservationAreaName ? ` (${conservationAreaName})` : ''}`,
+      status: 'warning',
+      summary: 'Conservation area — external changes require permission and must use approved materials',
+      detail: `This property is within the ${conservationAreaName ?? 'local'} conservation area. Demolition, significant extensions, and changes to the external appearance (including roof materials and windows) require planning permission. Permitted development rights may be more restricted than a standard property. Conservation area status protects the neighbourhood character and can support property value, but limits what changes you can make without permission.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Review approved applications at ${lpaSearchUrl} to understand what changes have been allowed on similar properties`,
+      grants: [],
+    }
+  }
+
+  // Article 4 Direction alone
+  if (articleFourDirection) {
+    return {
+      id: 'planning',
+      title: 'Planning — Article 4 Direction in place',
+      status: 'warning',
+      summary: 'Permitted development rights removed — check before planning any works',
+      detail: `An Article 4 Direction applies to this area${articleFourDescription ? `: ${articleFourDescription}` : ''}. This removes some or all permitted development rights — works that would normally not need planning permission (e.g. extensions, loft conversions) may now require a full application. Check the direction's specific scope with ${lpaName} before planning any alterations.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Contact ${lpaName} planning department to confirm which permitted development rights have been removed`,
+      grants: [],
+    }
+  }
+
+  // ── Property application history (last 5 years) ──────────────────────────
+  // Even when no designation restrictions exist, refused or pending applications
+  // on the property itself are a meaningful signal and warrant a warning.
+  const refusedOnProperty = propertyApplications.filter(a => a.decisionType === 'refused')
+  const pendingOnProperty  = propertyApplications.filter(a => a.decisionType === 'pending')
+  const approvedOnProperty = propertyApplications.filter(a => a.decisionType === 'approved')
+
+  if (refusedOnProperty.length > 0) {
+    const refs = refusedOnProperty.map(a => `"${a.description.slice(0, 80)}"${a.date ? ` (${a.date})` : ''}`).join('; ')
+    return {
+      id: 'planning',
+      title: `Planning — ${refusedOnProperty.length} refused application${refusedOnProperty.length !== 1 ? 's' : ''} on this property`,
+      status: 'warning',
+      summary: `Previous planning refusal${refusedOnProperty.length !== 1 ? 's' : ''} recorded in the last 5 years — ask seller for details`,
+      detail: `${lpaName} planning records show ${refusedOnProperty.length} refused planning application${refusedOnProperty.length !== 1 ? 's' : ''} on this property in the last 5 years: ${refs}. A refusal can indicate the council will not permit certain changes (e.g. extensions, change of use). Ask the seller why it was refused and whether enforcement notices were issued. Check the full history on the ${lpaName} portal.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Ask seller for all planning correspondence and check enforcement history at ${lpaApplicationsUrl}`,
+      grants: [],
+    }
+  }
+
+  if (pendingOnProperty.length > 0) {
+    const refs = pendingOnProperty.map(a => `"${a.description.slice(0, 80)}"`).join('; ')
+    return {
+      id: 'planning',
+      title: `Planning — ${pendingOnProperty.length} pending application${pendingOnProperty.length !== 1 ? 's' : ''} on this property`,
+      status: 'warning',
+      summary: 'Active planning application on this property — outcome may affect your purchase',
+      detail: `There ${pendingOnProperty.length === 1 ? 'is' : 'are'} ${pendingOnProperty.length} pending planning application${pendingOnProperty.length !== 1 ? 's' : ''} on this property: ${refs}. The outcome could affect what you can do with the property, and an approval may have conditions attached. Ask the seller for full details and your solicitor to check for any conditions or obligations.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: `Ask seller about the pending application and instruct your solicitor to review it`,
+      grants: [],
+    }
+  }
+
+  // Approved applications on property — helpful to know (work may be permitted but not yet done)
+  const approvedNote = approvedOnProperty.length > 0
+    ? ` ${approvedOnProperty.length} approved application${approvedOnProperty.length !== 1 ? 's' : ''} on record (last 5 years) — ask seller if any approved works remain outstanding.`
+    : ''
+
+  // No restrictions — show application summary
+  const nearbyNote = nearbyApplications.length > 0
+    ? ` ${nearbyApplications.length} nearby application${nearbyApplications.length !== 1 ? 's' : ''} found within 500 m.`
+    : ''
+
+  const hasAnyApplicationData = applicationsFound > 0
+
+  return {
+    id: 'planning',
+    title: 'Planning — no major restrictions identified',
+    status: 'pass',
+    summary: `No conservation area, listed building, or Article 4 Direction.${approvedNote || nearbyNote || ' No applications found in the last 5 years.'}`,
+    detail: hasAnyApplicationData
+      ? `No planning restrictions found.${approvedNote}${nearbyNote} You can review the full history on the ${lpaName} planning portal.`
+      : `No planning designations or applications found via the national planning dataset for this location (coverage is limited to ~30 pilot councils). Standard permitted development rights apply, but always verify directly with ${lpaName} planning department.`,
+    estimatedCostLow: 0, estimatedCostHigh: 0,
+    actionRequired: hasAnyApplicationData
+      ? (approvedOnProperty.length > 0 ? `Ask seller about approved but outstanding works — check at ${lpaApplicationsUrl}` : null)
+      : `Manually verify planning history at ${lpaApplicationsUrl}`,
+    grants: [],
+  }
+}
+
+function checkCouncilTax(info: CouncilTaxInfo | null, postcode: string): CheckResult {
+  const voaUrl = info?.voaLookupUrl ?? 'https://www.tax.service.gov.uk/check-your-council-tax-band/search'
+
+  if (!info) {
+    return {
+      id: 'council-tax',
+      title: 'Council tax — verify band before purchase',
+      status: 'info',
+      summary: 'Check your band at voa.gov.uk',
+      detail: `Council tax can add £1,200–£4,000+ per year to your ownership costs. Look up the property's exact band on the Valuation Office Agency (VOA) website. Around 400,000 properties in England are believed to be in the wrong band — you can challenge it.`,
+      estimatedCostLow: 0, estimatedCostHigh: 0,
+      actionRequired: 'Check the council tax band at tax.service.gov.uk/check-your-council-tax-band',
+      grants: [],
+    }
+  }
+
+  const bandDRate = info.avgBandDRate
+  const bandRates = info.bandRates
+
+  return {
+    id: 'council-tax',
+    title: `Council tax — ${info.localAuthority}`,
+    status: 'info',
+    summary: `Average Band D: £${bandDRate?.toLocaleString() ?? '–'}/year — verify the exact band before buying`,
+    detail: `In ${info.localAuthority}, the average Band D council tax is approximately £${bandDRate?.toLocaleString() ?? '–'}/year.${bandRates ? ` Estimated annual costs: Band A £${bandRates.A?.toLocaleString()}, Band C £${bandRates.C?.toLocaleString()}, Band E £${bandRates.E?.toLocaleString()}, Band G £${bandRates.G?.toLocaleString()}.` : ''} Look up the exact band on the VOA website — around 400,000 English properties are incorrectly banded. ${info.appealDeadlineNote}`,
+    estimatedCostLow: 0, estimatedCostHigh: 0,
+    actionRequired: `Look up this property's exact band at the VOA checker and compare against neighbours`,
+    grants: [],
+  }
+}
+
 function checkTenure(records: PricePaidRecord[]): CheckResult {
   const tenure = records[0]?.estateTenure ?? null
 
@@ -446,10 +734,14 @@ export interface HomebuyerCheckInput {
   yearBuilt: number
   /** Land Registry property type label used to filter comparables, e.g. "Detached", "Flat" */
   comparablePropertyType?: string | null
+  crime:       CrimeSummary   | null
+  broadband:   BroadbandCoverage | null
+  planning:    PlanningSummary   | null
+  councilTax:  CouncilTaxInfo    | null
 }
 
 export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerReport {
-  const { postcode, address, cert, upgradeRecommendations, priceHistory, askingPrice, yearBuilt, comparablePropertyType } = input
+  const { postcode, address, cert, upgradeRecommendations, priceHistory, askingPrice, yearBuilt, comparablePropertyType, crime, broadband, planning, councilTax } = input
 
   const checks: CheckResult[] = [
     checkEPC(cert, upgradeRecommendations),
@@ -460,6 +752,10 @@ export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerRe
     checkFloodRisk(),
     checkPriceHistory(priceHistory, askingPrice, comparablePropertyType),
     checkTenure(priceHistory),
+    checkCrime(crime),
+    checkBroadband(broadband, postcode),
+    checkPlanning(planning),
+    checkCouncilTax(councilTax, postcode),
   ]
 
   const totalCostLow  = checks.reduce((sum, c) => sum + c.estimatedCostLow,  0)
