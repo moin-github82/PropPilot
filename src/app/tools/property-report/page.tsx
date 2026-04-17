@@ -137,7 +137,7 @@ export default function PropertyReportPage() {
     const encoded = encodeURIComponent(pc)
     const addrQ   = address.trim() ? `?address=${encodeURIComponent(address.trim())}` : ''
 
-    const fetchCheck = async <T>(key: keyof CheckState, url: string): Promise<T | null> => {
+    const fetchCheck = async <T,>(key: keyof CheckState, url: string): Promise<T | null> => {
       try {
         const res = await fetch(url)
         const data = await res.json()
