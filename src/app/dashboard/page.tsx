@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { NavBar } from '../components/NavBar'
 import { getUser, getProperty, saveProperty, logout, clearProperty } from '../lib/auth'
 import type { User, StoredProperty } from '../lib/auth'
 
@@ -201,7 +202,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
       <form onSubmit={handleSubmit} className="card" style={{ padding: 28 }}>
         {/* Address */}
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Property address</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 12 }}>
+        <div className="pp-form-grid-1-2">
           <div>
             <label style={labelStyle}>House / flat no.</label>
             <input style={inputStyle} required value={form.houseNumber} onChange={e => set('houseNumber', e.target.value)} placeholder="14" />
@@ -211,7 +212,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
             <input style={inputStyle} required value={form.street} onChange={e => set('street', e.target.value)} placeholder="Alderton Close" />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+        <div className="pp-form-grid-2" style={{ marginBottom: 8 }}>
           <div>
             <label style={labelStyle}>Postcode</label>
             <input style={inputStyle} required value={form.postcode} onChange={e => set('postcode', e.target.value)} placeholder="MK9 3AG" />
@@ -250,7 +251,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
 
         {/* Property details */}
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Property details</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div className="pp-form-grid-3">
           <div>
             <label style={labelStyle}>Year built</label>
             <input style={inputStyle} type="number" value={form.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} placeholder="1989" min="1600" max="2025" />
@@ -272,7 +273,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
 
         {/* Purchase & mortgage */}
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Purchase & mortgage</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div className="pp-form-grid-2">
           <div>
             <label style={labelStyle}>Purchase price</label>
             <input style={inputStyle} type="number" value={form.purchasePrice} onChange={e => set('purchasePrice', e.target.value)} placeholder="285000" />
@@ -282,7 +283,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
             <input style={inputStyle} type="date" value={form.purchaseDate} onChange={e => set('purchaseDate', e.target.value)} />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="pp-form-grid-2" style={{ marginBottom: 0 }}>
           <div>
             <label style={labelStyle}>Mortgage fix end date</label>
             <input style={inputStyle} type="date" value={form.mortgageFixEnd} onChange={e => set('mortgageFixEnd', e.target.value)} />
@@ -319,7 +320,7 @@ function PropertyCard({ property, onEdit }: { property: StoredProperty; onEdit: 
     : null
 
   return (
-    <div className="card" style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 32, alignItems: 'center' }}>
+    <div className="card pp-property-card-grid" style={{ gridColumn: '1 / -1' }}>
       {/* EPC badge */}
       <div style={{
         width: 72, height: 72, borderRadius: 16,
@@ -596,7 +597,7 @@ function EPCUpgradeBanner({ property }: { property: StoredProperty }) {
       </div>
 
       {/* What's needed */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="pp-grid-epc-steps">
         <div>
           <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
             Typical steps for Band {band} → C
@@ -674,44 +675,26 @@ function QuickActions({ property }: { property: StoredProperty }) {
 
 function DashNav({ user, onSignOut }: { user: User; onSignOut: () => void }) {
   return (
-    <nav style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '16px 32px', borderBottom: '1px solid var(--slate-200)',
-      background: 'rgba(248,247,244,0.95)', backdropFilter: 'blur(12px)',
-      position: 'sticky', top: 0, zIndex: 100,
-    }}>
-      <Link href="/" style={{ textDecoration: 'none' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'var(--slate-900)' }}>
-          Prop<span style={{ color: 'var(--brand-400)' }}>Pilot</span>
-        </span>
-      </Link>
-
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <NavBar
+      rightSlot={<>
         <Link href="/dashboard" style={{ fontSize: 13, fontWeight: 500, color: 'var(--slate-800)', padding: '6px 12px', borderRadius: 8, background: 'var(--slate-100)', textDecoration: 'none' }}>Dashboard</Link>
         <Link href="/tools"     style={{ fontSize: 13, color: 'var(--slate-600)', padding: '6px 12px', textDecoration: 'none' }}>Tools</Link>
         <Link href="/homebuyer" style={{ fontSize: 13, color: 'var(--slate-600)', padding: '6px 12px', textDecoration: 'none' }}>Homebuyer check</Link>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 12 }}>
-          <div style={{
-            background: 'var(--brand-400)', color: '#fff', fontSize: 11, fontWeight: 600,
-            padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em',
-          }}>
-            PRO
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 4 }}>
+          <div style={{ background: 'var(--brand-400)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>PRO</div>
           <span style={{ fontSize: 13, color: 'var(--slate-600)' }}>{user.name}</span>
-          <button
-            onClick={onSignOut}
-            style={{
-              fontSize: 13, color: 'var(--slate-500)', background: 'none',
-              border: '1px solid var(--slate-200)', borderRadius: 8,
-              padding: '5px 12px', cursor: 'pointer',
-            }}
-          >
+          <button onClick={onSignOut} style={{ fontSize: 13, color: 'var(--slate-500)', background: 'none', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>
             Sign out
           </button>
         </div>
-      </div>
-    </nav>
+      </>}
+      mobileItems={[
+        { label: 'Dashboard',       href: '/dashboard' },
+        { label: 'Tools',           href: '/tools'     },
+        { label: 'Homebuyer check', href: '/homebuyer' },
+        { label: 'Sign out',        onClick: onSignOut },
+      ]}
+    />
   )
 }
 
@@ -763,7 +746,7 @@ export default function DashboardPage() {
       {showSetup ? (
         <SetupWizard onSave={handlePropertySaved} />
       ) : property ? (
-        <main style={{ maxWidth: 1060, margin: '0 auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <main style={{ maxWidth: 1060, margin: '0 auto', padding: '32px clamp(16px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Page header */}
           <div className="fade-up" style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
@@ -779,7 +762,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Three widgets */}
-          <div className="fade-up-d2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div className="fade-up-d2 pp-grid-3">
             <RemortgageCard property={property} />
             <MaintenanceCard property={property} />
             <DocumentsCard docCount={docCount} />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { NavBar } from '../../components/NavBar'
 import { getUser, getProperty, logout } from '../../lib/auth'
 import type { User, StoredProperty } from '../../lib/auth'
 
@@ -614,19 +615,8 @@ export default function EPCUpgradePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--slate-50)' }}>
-      {/* Nav */}
-      <nav style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '16px 32px', borderBottom: '1px solid var(--slate-200)',
-        background: 'rgba(248,247,244,0.95)', backdropFilter: 'blur(12px)',
-        position: 'sticky', top: 0, zIndex: 100,
-      }}>
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'var(--slate-900)' }}>
-            Prop<span style={{ color: 'var(--brand-400)' }}>Pilot</span>
-          </span>
-        </Link>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      <NavBar
+        rightSlot={<>
           <Link href="/dashboard" style={{ fontSize: 13, color: 'var(--slate-600)', textDecoration: 'none' }}>← Dashboard</Link>
           <button
             onClick={() => { logout(); router.push('/') }}
@@ -634,10 +624,14 @@ export default function EPCUpgradePage() {
           >
             Sign out
           </button>
-        </div>
-      </nav>
+        </>}
+        mobileItems={[
+          { label: '← Dashboard', href: '/dashboard' },
+          { label: 'Sign out',    onClick: () => { logout(); router.push('/') } },
+        ]}
+      />
 
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: '36px 24px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+      <main style={{ maxWidth: 900, margin: '0 auto', padding: '36px clamp(16px,3vw,24px)', display: 'flex', flexDirection: 'column', gap: 36 }}>
 
         {/* Header */}
         <div className="fade-up">

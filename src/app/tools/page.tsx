@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { NavBar } from '../components/NavBar'
 
 const tools = [
   {
@@ -48,18 +49,18 @@ const tools = [
 export default function ToolsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
-      {/* Nav */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px', borderBottom: '1px solid #e2ddd6', background: 'rgba(248,247,244,0.95)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: '#1a1917', textDecoration: 'none' }}>
-          Prop<span style={{ color: '#1D9E75' }}>Pilot</span>
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <NavBar
+        rightSlot={<>
           <Link href="/homebuyer" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>Homebuyer Check</Link>
           <Link href="/" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to home</Link>
-        </div>
-      </nav>
+        </>}
+        mobileItems={[
+          { label: 'Homebuyer Check', href: '/homebuyer' },
+          { label: '← Back to home',  href: '/' },
+        ]}
+      />
 
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '56px 40px 80px' }}>
+      <main style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 80px' }}>
         <div style={{ marginBottom: 48 }}>
           <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 10 }}>
             Free homeowner tools
@@ -72,7 +73,7 @@ export default function ToolsPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 16 }}>
           {tools.map(tool => (
             <Link key={tool.href} href={tool.href} style={{ textDecoration: 'none' }}>
               <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 16, padding: '28px', cursor: 'pointer', transition: 'box-shadow 0.15s, border-color 0.15s', height: '100%' }}

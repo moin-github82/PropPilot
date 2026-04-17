@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { NavBar } from '../../components/NavBar'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,14 +114,12 @@ export default function MaintenancePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 40px', borderBottom: '1px solid #e2ddd6', background: 'rgba(248,247,244,0.95)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: '#1a1917', textDecoration: 'none' }}>
-          Prop<span style={{ color: '#1D9E75' }}>Pilot</span>
-        </Link>
-        <Link href="/tools" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to tools</Link>
-      </nav>
+      <NavBar
+        rightSlot={<Link href="/tools" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to tools</Link>}
+        mobileItems={[{ label: '← Back to tools', href: '/tools' }]}
+      />
 
-      <main style={{ maxWidth: 720, margin: '0 auto', padding: '48px 40px 80px' }}>
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px) 80px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 8 }}>Home maintenance</span>

@@ -2,29 +2,32 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { NavBar } from './components/NavBar'
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function Nav() {
   return (
-    <nav style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '20px 40px', borderBottom: '1px solid var(--slate-200)',
-      background: 'rgba(248,247,244,0.9)', backdropFilter: 'blur(12px)',
-      position: 'sticky', top: 0, zIndex: 100,
-    }}>
-      <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--slate-900)' }}>
-        Prop<span style={{ color: 'var(--brand-400)' }}>Pilot</span>
-      </span>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+    <NavBar
+      rightSlot={<>
         <Link href="#features" style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Features</Link>
         <Link href="#pricing"  style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Pricing</Link>
         <Link href="/tools"    style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none' }}>Tools</Link>
-        <Link href="/homebuyer" style={{ fontSize: 14, fontWeight: 500, color: '#1D9E75', textDecoration: 'none', background: '#e8f8f3', padding: '6px 14px', borderRadius: '8px', border: '1px solid #9fe1cb' }}>Buying? Check a property</Link>
+        <Link href="/homebuyer" style={{ fontSize: 14, fontWeight: 500, color: '#1D9E75', textDecoration: 'none', background: '#e8f8f3', padding: '6px 14px', borderRadius: '8px', border: '1px solid #9fe1cb' }}>
+          Buying? Check a property
+        </Link>
         <Link href="/login" style={{ fontSize: 14, color: 'var(--slate-600)', textDecoration: 'none', padding: '6px 14px' }}>Sign in</Link>
         <a href="#waitlist" className="btn-primary" style={{ padding: '9px 20px', fontSize: 14 }}>Join waitlist</a>
-      </div>
-    </nav>
+      </>}
+      mobileItems={[
+        { label: 'Features',              href: '#features'  },
+        { label: 'Pricing',               href: '#pricing'   },
+        { label: 'Tools',                 href: '/tools'     },
+        { label: 'Buying? Check a property', href: '/homebuyer' },
+        { label: 'Sign in',               href: '/login'     },
+        { label: 'Join waitlist',         href: '#waitlist'  },
+      ]}
+    />
   )
 }
 
@@ -39,7 +42,8 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
 
   return (
     <section style={{
-      maxWidth: 760, margin: '0 auto', padding: '80px 40px 60px',
+      maxWidth: 760, margin: '0 auto',
+      padding: 'clamp(48px, 8vw, 80px) clamp(16px, 4vw, 40px) clamp(40px, 6vw, 60px)',
       textAlign: 'center',
     }}>
       <div className="fade-up">
@@ -48,12 +52,12 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
         </span>
       </div>
 
-      <h1 className="fade-up-d1" style={{ fontSize: 'clamp(36px, 5vw, 58px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 20 }}>
+      <h1 className="fade-up-d1" style={{ fontSize: 'clamp(32px, 5vw, 58px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 20 }}>
         Your home is your biggest asset.<br />
         <em style={{ fontStyle: 'italic', color: 'var(--brand-400)' }}>Start treating it like one.</em>
       </h1>
 
-      <p className="fade-up-d2" style={{ fontSize: 18, color: 'var(--slate-600)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}>
+      <p className="fade-up-d2" style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'var(--slate-600)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 36px' }}>
         PropPilot tells you what your home is worth, what&apos;s likely to break, when to remortgage, and exactly what it&apos;ll cost to reach EPC Band C — all in one place.
       </p>
 
@@ -64,7 +68,7 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
           </p>
         </div>
       ) : (
-        <form className="fade-up-d3" onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 440, margin: '0 auto 14px' }}>
+        <form className="fade-up-d3 pp-hero-form" onSubmit={handleSubmit}>
           <input
             type="email" required value={email} onChange={e => setEmail(e.target.value)}
             placeholder="Enter your email address"
@@ -72,7 +76,7 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
               flex: 1, height: 48, padding: '0 16px', fontSize: 15,
               border: '1.5px solid var(--slate-200)', borderRadius: 'var(--radius-md)',
               background: '#fff', color: 'var(--slate-800)', outline: 'none',
-              fontFamily: 'var(--font-body)',
+              fontFamily: 'var(--font-body)', minWidth: 0,
             }}
           />
           <button type="submit" className="btn-primary" style={{ height: 48, whiteSpace: 'nowrap' }}>
@@ -89,19 +93,14 @@ function Hero({ onJoin }: { onJoin: (email: string) => void }) {
 
 function SocialProof() {
   const stats = [
-    { n: '19M',   l: 'UK homes below EPC Band C' },
+    { n: '19M',    l: 'UK homes below EPC Band C' },
     { n: '£2,500', l: 'Avg. annual maintenance spend' },
-    { n: '1.6M',  l: 'Fixed-rate deals expire every year' },
+    { n: '1.6M',   l: 'Fixed-rate deals expire every year' },
   ]
   return (
-    <div style={{
-      display: 'flex', justifyContent: 'center', gap: 0,
-      borderTop: '1px solid var(--slate-200)', borderBottom: '1px solid var(--slate-200)',
-      background: '#fff',
-    }}>
+    <div className="pp-stats-bar">
       {stats.map((s, i) => (
-        <div key={i} style={{
-          flex: 1, maxWidth: 260, padding: '28px 32px', textAlign: 'center',
+        <div key={i} className="pp-stat-item" style={{
           borderRight: i < stats.length - 1 ? '1px solid var(--slate-200)' : 'none',
         }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 500, color: 'var(--brand-400)', margin: '0 0 4px' }}>{s.n}</p>
@@ -120,17 +119,17 @@ function Problems() {
     { icon: '📋', title: 'Leasehold confusion', body: 'Service charges, ground rent, lease extensions — most leaseholders don\'t know what they owe or when to act.', color: '#f5f3ff', iconBg: '#ede9fe' },
   ]
   return (
-    <section style={{ maxWidth: 960, margin: '0 auto', padding: '72px 40px' }}>
+    <section style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,40px)' }}>
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <span className="tag tag-slate" style={{ marginBottom: 12, display: 'inline-block' }}>The problem</span>
-        <h2 style={{ fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 16 }}>
           Owning a home has never been more complicated
         </h2>
         <p style={{ fontSize: 16, color: 'var(--slate-500)', maxWidth: 540, margin: '0 auto' }}>
           Most homeowners manage their biggest financial asset with a folder of PDFs and a vague sense of dread.
         </p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         {problems.map((p, i) => (
           <div key={i} className="card" style={{ background: p.color, border: 'none' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: p.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 14 }}>{p.icon}</div>
@@ -172,20 +171,20 @@ function Features() {
   ]
 
   return (
-    <section id="features" style={{ background: '#fff', padding: '72px 0' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 40px' }}>
+    <section id="features" style={{ background: '#fff', padding: 'clamp(40px,6vw,72px) 0' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 clamp(16px,4vw,40px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 56 }}>
           <span className="tag tag-green" style={{ marginBottom: 12, display: 'inline-block' }}>What PropPilot does</span>
-          <h2 style={{ fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)' }}>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)' }}>
             Everything your home needs, in one place
           </h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
           {features.map((f, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 40, alignItems: 'center', flexDirection: i % 2 === 0 ? 'row' : 'row-reverse' }}>
+            <div key={i} className="pp-grid-feature">
               <div>
                 <span className={`tag ${f.tagStyle}`} style={{ marginBottom: 14, display: 'inline-block' }}>{f.tag}</span>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--slate-900)', marginBottom: 14, lineHeight: 1.3 }}>{f.title}</h3>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px, 2vw, 26px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 14, lineHeight: 1.3 }}>{f.title}</h3>
                 <p style={{ fontSize: 15, color: 'var(--slate-600)', lineHeight: 1.75, margin: 0 }}>{f.body}</p>
               </div>
               <div className="card" style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)' }}>
@@ -206,11 +205,11 @@ function Features() {
 
 function EPCCallout() {
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 40px 72px' }}>
-      <div style={{ background: 'var(--brand-50)', border: '1px solid var(--brand-200)', borderRadius: 'var(--radius-xl)', padding: '40px 48px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center' }}>
+    <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 clamp(16px,4vw,40px) clamp(40px,6vw,72px)' }}>
+      <div className="pp-epc-callout" style={{ background: 'var(--brand-50)', border: '1px solid var(--brand-200)', borderRadius: 'var(--radius-xl)', padding: 'clamp(24px,4vw,40px) clamp(20px,4vw,48px)' }}>
         <div>
           <span className="tag tag-green" style={{ marginBottom: 14, display: 'inline-block' }}>EPC deadline — 2030</span>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 500, color: 'var(--brand-800)', marginBottom: 12 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,28px)', fontWeight: 500, color: 'var(--brand-800)', marginBottom: 12 }}>
             61% of UK homes need to upgrade. Most homeowners don&apos;t know where to start.
           </h2>
           <p style={{ fontSize: 15, color: 'var(--brand-600)', lineHeight: 1.7, margin: 0 }}>
@@ -233,11 +232,11 @@ function Testimonials() {
     { quote: 'Predicted our boiler was due for replacement before it failed. Sorted it in October and saved about £600 in emergency callout fees.', name: 'Tom R.', role: 'Victorian terrace, Bristol', initials: 'TR' },
   ]
   return (
-    <section style={{ background: 'var(--slate-50)', padding: '72px 0' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 40px' }}>
+    <section style={{ background: 'var(--slate-50)', padding: 'clamp(40px,6vw,72px) 0' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 clamp(16px,4vw,40px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <span className="tag tag-slate" style={{ marginBottom: 12, display: 'inline-block' }}>Early access users</span>
-          <h2 style={{ fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 500, color: 'var(--slate-900)' }}>What homeowners are saying</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 500, color: 'var(--slate-900)' }}>What homeowners are saying</h2>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
           {testimonials.map((t, i) => (
@@ -274,14 +273,14 @@ function Pricing() {
     },
   ]
   return (
-    <section id="pricing" style={{ background: '#fff', padding: '72px 0' }}>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 40px' }}>
+    <section id="pricing" style={{ background: '#fff', padding: 'clamp(40px,6vw,72px) 0' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 clamp(16px,4vw,40px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <span className="tag tag-green" style={{ marginBottom: 12, display: 'inline-block' }}>Pricing</span>
-          <h2 style={{ fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 12 }}>Simple, honest pricing</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 12 }}>Simple, honest pricing</h2>
           <p style={{ fontSize: 15, color: 'var(--slate-500)' }}>No hidden fees. Cancel any time.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="pp-grid-3">
           {plans.map((p, i) => (
             <div key={i} className="card" style={p.featured ? { border: '2px solid var(--brand-400)', position: 'relative' } : {}}>
               {p.featured && (
@@ -316,9 +315,9 @@ function FinalCTA({ onJoin }: { onJoin: (email: string) => void }) {
     if (email) { onJoin(email); setSubmitted(true) }
   }
   return (
-    <section id="waitlist" style={{ background: 'var(--slate-900)', padding: '80px 40px', textAlign: 'center' }}>
+    <section id="waitlist" style={{ background: 'var(--slate-900)', padding: 'clamp(48px,8vw,80px) clamp(16px,4vw,40px)', textAlign: 'center' }}>
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 500, color: '#fff', marginBottom: 16 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 500, color: '#fff', marginBottom: 16 }}>
           Your home deserves better than a drawer full of paperwork.
         </h2>
         <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 32, lineHeight: 1.7 }}>
@@ -327,11 +326,11 @@ function FinalCTA({ onJoin }: { onJoin: (email: string) => void }) {
         {submitted ? (
           <p style={{ fontSize: 16, color: 'var(--brand-200)', fontWeight: 500 }}>You&apos;re on the list. We&apos;ll be in touch soon. ✓</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 420, margin: '0 auto 12px' }}>
+          <form onSubmit={handleSubmit} className="pp-final-cta-form">
             <input
               type="email" required value={email} onChange={e => setEmail(e.target.value)}
               placeholder="Your email address"
-              style={{ flex: 1, height: 48, padding: '0 16px', fontSize: 15, border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontFamily: 'var(--font-body)', outline: 'none' }}
+              style={{ flex: 1, height: 48, padding: '0 16px', fontSize: 15, border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontFamily: 'var(--font-body)', outline: 'none', minWidth: 0 }}
             />
             <button type="submit" className="btn-primary" style={{ height: 48 }}>Join waitlist</button>
           </form>
@@ -344,7 +343,7 @@ function FinalCTA({ onJoin }: { onJoin: (email: string) => void }) {
 
 function Footer() {
   return (
-    <footer style={{ background: 'var(--slate-900)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '24px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <footer style={{ background: 'var(--slate-900)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '24px clamp(16px,4vw,40px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
       <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>PropPilot</span>
       <div style={{ display: 'flex', gap: 24 }}>
         {['Privacy', 'Terms', 'Contact'].map(l => (

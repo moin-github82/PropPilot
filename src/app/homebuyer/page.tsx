@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { NavBar } from '../components/NavBar'
 import type { HomebuyerReport, CheckResult, CheckStatus, Verdict } from '../lib/homebuyerCheck'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -27,23 +28,19 @@ const VERDICT_EMOJI: Record<Verdict, string> = {
 
 function Nav() {
   return (
-    <nav style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '18px 40px', borderBottom: '1px solid #e2ddd6',
-      background: 'rgba(248,247,244,0.95)', backdropFilter: 'blur(12px)',
-      position: 'sticky', top: 0, zIndex: 100,
-    }}>
-      <Link href="/" style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: '#1a1917', textDecoration: 'none' }}>
-        Prop<span style={{ color: '#1D9E75' }}>Pilot</span>
-      </Link>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+    <NavBar
+      rightSlot={<>
         <span style={{ fontSize: 13, color: '#5e5a52', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20, padding: '4px 12px' }}>
           Homebuyer Check
         </span>
         <Link href="/tools" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>Tools</Link>
         <Link href="/" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Home</Link>
-      </div>
-    </nav>
+      </>}
+      mobileItems={[
+        { label: 'Tools', href: '/tools' },
+        { label: '← Home', href: '/' },
+      ]}
+    />
   )
 }
 
@@ -71,7 +68,7 @@ function SearchForm({ onSubmit, loading }: {
   const labelStyle = { fontSize: 12, fontWeight: 500, color: '#5e5a52', display: 'block', marginBottom: 6 } as const
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '56px 40px 0' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 0' }}>
       <div style={{ marginBottom: 40 }}>
         <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 10 }}>
           Free property due diligence
@@ -86,7 +83,7 @@ function SearchForm({ onSubmit, loading }: {
 
       <form onSubmit={handleSubmit}>
         <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 16, padding: '28px', marginBottom: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="pp-hb-form-grid">
             <div>
               <label style={labelStyle}>House number or name</label>
               <input
@@ -102,7 +99,7 @@ function SearchForm({ onSubmit, loading }: {
               />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="pp-hb-form-grid" style={{ marginBottom: 0 }}>
             <div>
               <label style={labelStyle}>Postcode</label>
               <input
