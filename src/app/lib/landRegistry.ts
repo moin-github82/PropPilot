@@ -2,11 +2,9 @@
  * Land Registry Price Paid Data API
  *
  * Provider  : HM Land Registry
- * Endpoint  : https://landregistry.data.gov.uk (SPARQL / REST)
+ * Endpoint  : https://landregistry.data.gov.uk (SPARQL)
  * Auth      : None required — fully public
  * Docs      : https://landregistry.data.gov.uk/app/ppd
- *
- * Also uses the UK House Price Index (HPI) API for current valuations.
  */
 
 import axios from 'axios'
@@ -15,108 +13,131 @@ import axios from 'axios'
 
 export interface PricePaidRecord {
   transactionId: string
-  price: number
-  date: string            // ISO date string
-  postcode: string
-  propertyType: string    // D=Detached, S=Semi-Detached, T=Terraced, F=Flat/Maisonette
-  newBuild: boolean
-  estateTenure: string    // F=Freehold, L=Leasehold
+  price:         number
+  date:          string
+  postcode:      string
+  propertyType:  string   // D=Detached S=Semi-Detached T=Terraced F=Flat
+  newBuild:      boolean
+  estateTenure:  string   // F=Freehold L=Leasehold
   address: {
-    paon: string          // Primary addressable object name (house number/name)
-    saon: string          // Secondary addressable object name (flat/unit)
-    street: string
+    paon:     string
+    saon:     string
+    street:   string
     locality: string
-    town: string
+    town:     string
     district: string
-    county: string
+    county:   string
   }
 }
 
 export interface HPIData {
-  date: string
-  indexValue: number
-  changeMonthly: number   // % change month-on-month
-  changeAnnual: number    // % change year-on-year
-  averagePrice: number
-  region: string
+  date:          string
+  indexValue:    number
+  changeMonthly: number
+  changeAnnual:  number
+  averagePrice:  number
+  region:        string
 }
 
 export interface PropertyValuation {
-  estimatedValue: number
-  estimatedValueLow: number
-  estimatedValueHigh: number
-  lastSalePrice: number | null
-  lastSaleDate: string | null
-  priceHistory: PricePaidRecord[]
-  currentHPI: HPIData | null
-  growthSinceLastSale: number | null  // percentage
-  postcode: string
-  propertyType: string | null
+  estimatedValue:      number
+  estimatedValueLow:   number
+  estimatedValueHigh:  number
+  lastSalePrice:       number | null
+  lastSaleDate:        string | null
+  priceHistory:        PricePaidRecord[]
+  currentHPI:          HPIData | null
+  growthSinceLastSale: number | null
+  postcode:            string
+  propertyType:        string | null
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const PROPERTY_TYPE_MAP: Record<string, string> = {
-  D: 'Detached',
-  S: 'Semi-Detached',
-  T: 'Terraced',
-  F: 'Flat / Maisonette',
+export const PROPERTY_TYPE_MAP: Record<string, string> = {
+  D: 'Detached', S: 'Semi-Detached', T: 'Terraced', F: 'Flat / Maisonette',
 }
 
-const TENURE_MAP: Record<string, string> = {
-  F: 'Freehold',
-  L: 'Leasehold',
+export const TENURE_MAP: Record<string, string> = {
+  F: 'Freehold', L: 'Leasehold',
 }
 
-function normalisePostcode(postcode: string): string {
-  return postcode.replace(/\s/g, '').toUpperCase()
+function normalisePostcode(p: string): string {
+  return p.replace(/\s/g, '').toUpperCase()
 }
 
-function formatPostcodeForQuery(postcode: string): string {
-  // Land Registry SPARQL wants postcodes with a space: "SW1A 2AA"
-  const clean = normalisePostcode(postcode)
-  return clean.slice(0, -3) + ' ' + clean.slice(-3)
+function formatPostcodeForQuery(p: string): string {
+  const clean = normalisePostcode(p)
+  return `${clean.slice(0, -3)} ${clean.slice(-3)}`
 }
 
-// ─── Price Paid Data via SPARQL ───────────────────────────────────────────────
+// ─── SPARQL endpoint ──────────────────────────────────────────────────────────
 
 const SPARQL_ENDPOINT = 'https://landregistry.data.gov.uk/landregistry/query'
 
-/**
- * Fetch recent sales for a postcode using the SPARQL endpoint.
- * Returns up to 10 most recent transactions.
- */
+const SPARQL_PREFIXES = `
+  PREFIX lrppi:    <http://landregistry.data.gov.uk/def/ppi/>
+  PREFIX lrcommon: <http://landregistry.data.gov.uk/def/common/>
+  PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+  PREFIX xsd:      <http://www.w3.org/2001/XMLSchema#>
+`
+
+function mapBinding(b: Record<string, { value: string }>, fallbackPostcode: string): PricePaidRecord {
+  return {
+    transactionId: b.transactionId?.value ?? '',
+    price:         parseInt(b.amount?.value  ?? '0', 10),
+    date:          b.date?.value             ?? '',
+    postcode:      b.postcode?.value         ?? fallbackPostcode,
+    propertyType:  b.propertyType?.value     ?? '',
+    newBuild:      b.newBuild?.value         === 'true',
+    estateTenure:  b.estateTenure?.value     ?? '',
+    address: {
+      paon:     b.paon?.value     ?? '',
+      saon:     b.saon?.value     ?? '',
+      street:   b.street?.value   ?? '',
+      locality: b.locality?.value ?? '',
+      town:     b.town?.value     ?? '',
+      district: b.district?.value ?? '',
+      county:   b.county?.value   ?? '',
+    },
+  }
+}
+
+// ─── Price Paid by postcode ───────────────────────────────────────────────────
+
 export async function getPricePaidByPostcode(
   postcode: string,
-  limit = 10
+  limit = 10   // pass a higher value (e.g. 25) when the caller will filter by property type
 ): Promise<PricePaidRecord[]> {
-  const formattedPostcode = formatPostcodeForQuery(postcode)
+  const fp = formatPostcodeForQuery(postcode)
 
-  const sparqlQuery = `
-    PREFIX lrppi: <http://landregistry.data.gov.uk/def/ppi/>
-    PREFIX lrcommon: <http://landregistry.data.gov.uk/def/common/>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-
+  const query = `
+    ${SPARQL_PREFIXES}
     SELECT ?transactionId ?amount ?date ?propertyType ?newBuild ?estateTenure
            ?paon ?saon ?street ?locality ?town ?district ?county ?postcode
     WHERE {
-      ?transaction lrppi:pricePaid ?amount ;
+      ?transaction a lrppi:TransactionRecord ;
+                   lrppi:pricePaid ?amount ;
                    lrppi:transactionDate ?date ;
-                   lrppi:propertyType/rdfs:label ?propertyType ;
+                   lrppi:propertyType ?propertyTypeNode ;
                    lrppi:newBuild ?newBuild ;
-                   lrppi:estateType/rdfs:label ?estateTenure ;
-                   lrppi:propertyAddress ?address .
+                   lrppi:estateType ?estateTenureNode ;
+                   lrppi:propertyAddress ?addr .
 
-      ?address lrcommon:postcode "${formattedPostcode}" ;
-               lrcommon:paon ?paon ;
-               lrcommon:street ?street ;
-               lrcommon:town ?town ;
-               lrcommon:county ?county .
+      ?propertyTypeNode rdfs:label ?propertyType .
+      ?estateTenureNode rdfs:label ?estateTenure .
 
-      OPTIONAL { ?address lrcommon:saon ?saon }
-      OPTIONAL { ?address lrcommon:locality ?locality }
-      OPTIONAL { ?address lrcommon:district ?district }
-      OPTIONAL { ?address lrcommon:postcode ?postcode }
+      ?addr lrcommon:postcode "${fp}"^^xsd:string .
+
+      OPTIONAL { ?addr lrcommon:paon     ?paon     }
+      OPTIONAL { ?addr lrcommon:saon     ?saon     }
+      OPTIONAL { ?addr lrcommon:street   ?street   }
+      OPTIONAL { ?addr lrcommon:locality ?locality }
+      OPTIONAL { ?addr lrcommon:town     ?town     }
+      OPTIONAL { ?addr lrcommon:district ?district }
+      OPTIONAL { ?addr lrcommon:county   ?county   }
+      OPTIONAL { ?addr lrcommon:postcode ?postcode }
 
       BIND(STR(?transaction) AS ?transactionId)
     }
@@ -125,65 +146,49 @@ export async function getPricePaidByPostcode(
   `
 
   const response = await axios.get(SPARQL_ENDPOINT, {
-    params: { query: sparqlQuery },
+    params:  { query },
     headers: { Accept: 'application/sparql-results+json' },
+    timeout: 10000,
   })
 
-  const bindings = response.data?.results?.bindings ?? []
-
-  return bindings.map((b: Record<string, { value: string }>) => ({
-    transactionId: b.transactionId?.value ?? '',
-    price: parseInt(b.amount?.value ?? '0', 10),
-    date: b.date?.value ?? '',
-    postcode: b.postcode?.value ?? formattedPostcode,
-    propertyType: b.propertyType?.value ?? '',
-    newBuild: b.newBuild?.value === 'true',
-    estateTenure: b.estateTenure?.value ?? '',
-    address: {
-      paon: b.paon?.value ?? '',
-      saon: b.saon?.value ?? '',
-      street: b.street?.value ?? '',
-      locality: b.locality?.value ?? '',
-      town: b.town?.value ?? '',
-      district: b.district?.value ?? '',
-      county: b.county?.value ?? '',
-    },
-  }))
+  return (response.data?.results?.bindings ?? []).map(
+    (b: Record<string, { value: string }>) => mapBinding(b, fp)
+  )
 }
 
-/**
- * Fetch price paid records for a specific address.
- * Filters by paon (house number/name) and street.
- */
+// ─── Price Paid by specific address ──────────────────────────────────────────
+
 export async function getPricePaidByAddress(
   postcode: string,
-  paon: string,
-  street: string
+  paon:     string,
+  street:   string
 ): Promise<PricePaidRecord[]> {
-  const formattedPostcode = formatPostcodeForQuery(postcode)
+  const fp = formatPostcodeForQuery(postcode)
 
-  const sparqlQuery = `
-    PREFIX lrppi: <http://landregistry.data.gov.uk/def/ppi/>
-    PREFIX lrcommon: <http://landregistry.data.gov.uk/def/common/>
-
+  const query = `
+    ${SPARQL_PREFIXES}
     SELECT ?transactionId ?amount ?date ?propertyType ?newBuild ?estateTenure
            ?paon ?saon ?street ?locality ?town ?district ?county ?postcode
     WHERE {
-      ?transaction lrppi:pricePaid ?amount ;
+      ?transaction a lrppi:TransactionRecord ;
+                   lrppi:pricePaid ?amount ;
                    lrppi:transactionDate ?date ;
-                   lrppi:propertyType/rdfs:label ?propertyType ;
+                   lrppi:propertyType ?propertyTypeNode ;
                    lrppi:newBuild ?newBuild ;
-                   lrppi:estateType/rdfs:label ?estateTenure ;
-                   lrppi:propertyAddress ?address .
+                   lrppi:estateType ?estateTenureNode ;
+                   lrppi:propertyAddress ?addr .
 
-      ?address lrcommon:postcode "${formattedPostcode}" ;
-               lrcommon:paon "${paon.toUpperCase()}" ;
-               lrcommon:street "${street.toUpperCase()}" .
+      ?propertyTypeNode rdfs:label ?propertyType .
+      ?estateTenureNode rdfs:label ?estateTenure .
 
-      OPTIONAL { ?address lrcommon:saon ?saon }
-      OPTIONAL { ?address lrcommon:locality ?locality }
-      OPTIONAL { ?address lrcommon:district ?district }
-      OPTIONAL { ?address lrcommon:postcode ?postcode }
+      ?addr lrcommon:postcode "${fp}"^^xsd:string ;
+            lrcommon:paon     "${paon.toUpperCase()}"^^xsd:string ;
+            lrcommon:street   "${street.toUpperCase()}"^^xsd:string .
+
+      OPTIONAL { ?addr lrcommon:saon     ?saon     }
+      OPTIONAL { ?addr lrcommon:locality ?locality }
+      OPTIONAL { ?addr lrcommon:district ?district }
+      OPTIONAL { ?addr lrcommon:postcode ?postcode }
 
       BIND(STR(?transaction) AS ?transactionId)
     }
@@ -191,92 +196,67 @@ export async function getPricePaidByAddress(
   `
 
   const response = await axios.get(SPARQL_ENDPOINT, {
-    params: { query: sparqlQuery },
+    params:  { query },
     headers: { Accept: 'application/sparql-results+json' },
+    timeout: 10000,
   })
 
-  const bindings = response.data?.results?.bindings ?? []
-
-  return bindings.map((b: Record<string, { value: string }>) => ({
-    transactionId: b.transactionId?.value ?? '',
-    price: parseInt(b.amount?.value ?? '0', 10),
-    date: b.date?.value ?? '',
-    postcode: b.postcode?.value ?? formattedPostcode,
-    propertyType: b.propertyType?.value ?? '',
-    newBuild: b.newBuild?.value === 'true',
-    estateTenure: b.estateTenure?.value ?? '',
-    address: {
-      paon: b.paon?.value ?? '',
-      saon: b.saon?.value ?? '',
-      street: b.street?.value ?? '',
-      locality: b.locality?.value ?? '',
-      town: b.town?.value ?? '',
-      district: b.district?.value ?? '',
-      county: b.county?.value ?? '',
-    },
-  }))
+  return (response.data?.results?.bindings ?? []).map(
+    (b: Record<string, { value: string }>) => mapBinding(b, fp)
+  )
 }
 
-// ─── UK House Price Index ─────────────────────────────────────────────────────
+// ─── HPI ──────────────────────────────────────────────────────────────────────
 
 const HPI_ENDPOINT = 'https://landregistry.data.gov.uk/api/1'
 
-/**
- * Fetch the most recent HPI data for a given region code.
- * Region codes: E12000001 (North East), E12000007 (London), etc.
- */
 export async function getHPIByRegion(regionCode: string): Promise<HPIData | null> {
   try {
     const response = await axios.get(`${HPI_ENDPOINT}/hpi`, {
       params: {
-        region: regionCode,
-        '_sort': '-date',
+        region:      regionCode,
+        '_sort':     '-date',
         '_pageSize': 1,
-        '_page': 0,
-        '_properties': 'date,indice,changeMonth,changeAnnual,averagePrice',
+        '_page':     0,
       },
       headers: { Accept: 'application/json' },
+      timeout: 8000,
     })
     const item = response.data?.result?.items?.[0]
     if (!item) return null
     return {
-      date: item.date ?? '',
-      indexValue: item.indice ?? 0,
-      changeMonthly: item.changeMonth ?? 0,
-      changeAnnual: item.changeAnnual ?? 0,
-      averagePrice: item.averagePrice ?? 0,
-      region: regionCode,
+      date:          item.date          ?? '',
+      indexValue:    item.indice        ?? 0,
+      changeMonthly: item.changeMonth   ?? 0,
+      changeAnnual:  item.changeAnnual  ?? 0,
+      averagePrice:  item.averagePrice  ?? 0,
+      region:        regionCode,
     }
   } catch {
     return null
   }
 }
 
-// ─── Valuation engine ─────────────────────────────────────────────────────────
+// ─── Postcode → HPI region ────────────────────────────────────────────────────
 
-/**
- * Map a postcode district to the nearest HPI region code.
- * This is a simplified mapping — expand for production.
- */
 function postcodeToHPIRegion(postcode: string): string {
-  const district = normalisePostcode(postcode).slice(0, 2).toUpperCase()
-  const londonPrefixes = ['EC', 'WC', 'E', 'N', 'NW', 'SE', 'SW', 'W', 'BR', 'CR', 'DA', 'EN', 'HA', 'IG', 'KT', 'RM', 'SM', 'TW', 'UB', 'WD']
-  if (londonPrefixes.some(p => district.startsWith(p))) return 'E12000007' // London
-  if (['M', 'SK', 'OL', 'BL', 'WN', 'WA'].some(p => district.startsWith(p))) return 'E12000002' // North West
-  if (['LS', 'BD', 'HX', 'HD', 'WF', 'HG', 'YO', 'DN'].some(p => district.startsWith(p))) return 'E12000003' // Yorkshire
-  if (['B', 'CV', 'WV', 'WS', 'DY', 'ST'].some(p => district.startsWith(p))) return 'E12000005' // West Midlands
-  if (['BS', 'BA', 'GL', 'SN', 'SP', 'RG', 'OX'].some(p => district.startsWith(p))) return 'E12000009' // South West
-  if (['BN', 'TN', 'ME', 'CT', 'PO', 'SO', 'GU'].some(p => district.startsWith(p))) return 'E12000008' // South East
-  return 'E92000001' // England fallback
+  const d = normalisePostcode(postcode).slice(0, 2).toUpperCase()
+  const london = ['EC','WC','E','N','NW','SE','SW','W','BR','CR','DA','EN','HA','IG','KT','RM','SM','TW','UB','WD']
+  if (london.some(p => d.startsWith(p))) return 'E12000007'
+  if (['M','SK','OL','BL','WN','WA'].some(p => d.startsWith(p))) return 'E12000002'
+  if (['LS','BD','HX','HD','WF','HG','YO','DN'].some(p => d.startsWith(p))) return 'E12000003'
+  if (['B','CV','WV','WS','DY','ST'].some(p => d.startsWith(p))) return 'E12000005'
+  if (['BS','BA','GL','SN','SP','RG','OX'].some(p => d.startsWith(p))) return 'E12000009'
+  if (['BN','TN','ME','CT','PO','SO','GU'].some(p => d.startsWith(p))) return 'E12000008'
+  return 'E92000001'
 }
 
-/**
- * Estimate current property value based on last sale price + HPI growth.
- */
+// ─── Property valuation ───────────────────────────────────────────────────────
+
 export async function getPropertyValuation(
-  postcode: string,
+  postcode:    string,
   houseNumber: string,
-  street: string
+  street:      string
 ): Promise<PropertyValuation> {
   const [priceHistory, hpi] = await Promise.all([
     getPricePaidByAddress(postcode, houseNumber, street),
@@ -288,34 +268,26 @@ export async function getPropertyValuation(
   let growthSinceLastSale: number | null = null
 
   if (lastSale && hpi) {
-    // Apply HPI growth since the last sale date
-    const saleDateYear = new Date(lastSale.date).getFullYear()
-    const currentYear  = new Date().getFullYear()
-    const yearsHeld    = currentYear - saleDateYear
-
-    // Simple annual compound approximation using HPI
-    const annualGrowthRate = (hpi.changeAnnual / 100) || 0.03
-    const growthFactor = Math.pow(1 + annualGrowthRate, yearsHeld)
-    estimatedValue = Math.round(lastSale.price * growthFactor)
+    const yearsHeld     = new Date().getFullYear() - new Date(lastSale.date).getFullYear()
+    const annualGrowth  = (hpi.changeAnnual / 100) || 0.03
+    const growthFactor  = Math.pow(1 + annualGrowth, yearsHeld)
+    estimatedValue      = Math.round(lastSale.price * growthFactor)
     growthSinceLastSale = Math.round((growthFactor - 1) * 100)
   } else if (hpi) {
     estimatedValue = hpi.averagePrice
   }
 
-  // ±15% confidence range
   const margin = estimatedValue * 0.15
   return {
     estimatedValue,
-    estimatedValueLow:  Math.round(estimatedValue - margin),
-    estimatedValueHigh: Math.round(estimatedValue + margin),
-    lastSalePrice: lastSale?.price ?? null,
-    lastSaleDate:  lastSale?.date  ?? null,
+    estimatedValueLow:   Math.round(estimatedValue - margin),
+    estimatedValueHigh:  Math.round(estimatedValue + margin),
+    lastSalePrice:       lastSale?.price ?? null,
+    lastSaleDate:        lastSale?.date  ?? null,
     priceHistory,
-    currentHPI: hpi,
+    currentHPI:          hpi,
     growthSinceLastSale,
     postcode,
-    propertyType: lastSale ? (PROPERTY_TYPE_MAP[lastSale.propertyType[0]] ?? lastSale.propertyType) : null,
+    propertyType:        lastSale ? (PROPERTY_TYPE_MAP[lastSale.propertyType[0]] ?? lastSale.propertyType) : null,
   }
 }
-
-export { PROPERTY_TYPE_MAP, TENURE_MAP }

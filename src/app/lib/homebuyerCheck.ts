@@ -274,32 +274,41 @@ function checkFloodRisk(): CheckResult {
 
 function checkPriceHistory(
   records: PricePaidRecord[],
-  askingPrice: number | null
+  askingPrice: number | null,
+  comparablePropertyType: string | null | undefined
 ): CheckResult {
+  // Human-readable label for messages, e.g. "semi-detached" or "flat"
+  const typeLabel = comparablePropertyType
+    ? comparablePropertyType.toLowerCase()
+    : 'property'
+
   if (!records.length) {
     return {
       id: 'price',
-      title: 'Price history — no comparable sales found',
+      title: `Price history — no comparable ${typeLabel} sales found`,
       status: 'info',
-      summary: 'No recent Land Registry sales in this postcode',
-      detail: 'Could not find recent comparable sales for this postcode. This may be a low-turnover area. Use Rightmove/Zoopla sold prices or commission a RICS valuation to verify the asking price is fair.',
+      summary: `No recent Land Registry ${typeLabel} sales in this postcode`,
+      detail: `Could not find recent comparable ${typeLabel} sales for this postcode. This may be a low-turnover area. Use Rightmove/Zoopla sold prices or commission a RICS valuation to verify the asking price is fair.`,
       estimatedCostLow:  0,
       estimatedCostHigh: 0,
-      actionRequired: 'Check sold prices on Rightmove for this street/area',
+      actionRequired: `Check sold ${typeLabel} prices on Rightmove for this street/area`,
       grants: [],
     }
   }
 
   const avgComparable = records.reduce((sum, r) => sum + r.price, 0) / records.length
   const mostRecent = records[0]
+  const typeNote = comparablePropertyType
+    ? ` (${comparablePropertyType} only)`
+    : ''
 
   if (askingPrice && askingPrice > avgComparable * 1.15) {
     return {
       id: 'price',
-      title: 'Price history — asking price above comparables',
+      title: `Price history — asking price above comparable ${typeLabel}s`,
       status: 'warning',
-      summary: `Asking price is ${Math.round(((askingPrice / avgComparable) - 1) * 100)}% above recent local sales`,
-      detail: `Land Registry shows ${records.length} comparable sales in this postcode averaging £${Math.round(avgComparable).toLocaleString()}. Most recent sale: £${mostRecent.price.toLocaleString()} on ${new Date(mostRecent.date).toLocaleDateString('en-GB')}. The asking price appears above market — this gives you negotiating room.`,
+      summary: `Asking price is ${Math.round(((askingPrice / avgComparable) - 1) * 100)}% above recent local ${typeLabel} sales`,
+      detail: `Land Registry shows ${records.length} comparable ${typeLabel} sales in this postcode${typeNote} averaging £${Math.round(avgComparable).toLocaleString()}. Most recent sale: £${mostRecent.price.toLocaleString()} on ${new Date(mostRecent.date).toLocaleDateString('en-GB')}. The asking price appears above market — this gives you negotiating room.`,
       estimatedCostLow:  0,
       estimatedCostHigh: 0,
       actionRequired: `Use comparable data to negotiate. Suggest offer of £${Math.round(avgComparable * 1.05).toLocaleString()} as a starting point.`,
@@ -309,10 +318,10 @@ function checkPriceHistory(
 
   return {
     id: 'price',
-    title: 'Price history — fairly priced vs comparables',
+    title: `Price history — fairly priced vs comparable ${typeLabel}s`,
     status: 'pass',
-    summary: `${records.length} comparable sales in postcode — price looks reasonable`,
-    detail: `Recent Land Registry sales average £${Math.round(avgComparable).toLocaleString()} in this postcode. Most recent: £${mostRecent.price.toLocaleString()} (${new Date(mostRecent.date).toLocaleDateString('en-GB')}). Asking price is within a reasonable range.`,
+    summary: `${records.length} comparable ${typeLabel} sales in postcode${typeNote} — price looks reasonable`,
+    detail: `Recent Land Registry ${typeLabel} sales${typeNote} average £${Math.round(avgComparable).toLocaleString()} in this postcode. Most recent: £${mostRecent.price.toLocaleString()} (${new Date(mostRecent.date).toLocaleDateString('en-GB')}). Asking price is within a reasonable range.`,
     estimatedCostLow:  0,
     estimatedCostHigh: 0,
     actionRequired: null,
@@ -435,10 +444,12 @@ export interface HomebuyerCheckInput {
   priceHistory: PricePaidRecord[]
   askingPrice: number | null
   yearBuilt: number
+  /** Land Registry property type label used to filter comparables, e.g. "Detached", "Flat" */
+  comparablePropertyType?: string | null
 }
 
 export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerReport {
-  const { postcode, address, cert, upgradeRecommendations, priceHistory, askingPrice, yearBuilt } = input
+  const { postcode, address, cert, upgradeRecommendations, priceHistory, askingPrice, yearBuilt, comparablePropertyType } = input
 
   const checks: CheckResult[] = [
     checkEPC(cert, upgradeRecommendations),
@@ -447,7 +458,7 @@ export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerRe
     checkDamp(cert, yearBuilt),
     checkElectrics(yearBuilt),
     checkFloodRisk(),
-    checkPriceHistory(priceHistory, askingPrice),
+    checkPriceHistory(priceHistory, askingPrice, comparablePropertyType),
     checkTenure(priceHistory),
   ]
 
