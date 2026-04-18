@@ -427,14 +427,24 @@ export default function PricingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14 }}>
           {PROF_SERVICES.map(svc => (
-            <div key={svc.name} style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 12, padding: '20px 16px', textAlign: 'center' }}>
-              <p style={{ fontSize: 28, margin: '0 0 10px' }}>{svc.icon}</p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 4px', lineHeight: 1.4 }}>{svc.name}</p>
-              <p style={{ fontSize: 11, color: '#9e998f', margin: '0 0 8px', lineHeight: 1.4 }}>{svc.desc}</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#1D9E75', margin: 0 }}>{svc.price}</p>
-              <p style={{ fontSize: 10, color: '#9e998f', margin: '4px 0 0' }}>10% off for Pro/Enterprise</p>
-            </div>
+            <Link key={svc.name} href="/pricing/professional" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 12, padding: '20px 16px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s', height: '100%' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#1D9E75'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e2ddd6'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
+              >
+                <p style={{ fontSize: 28, margin: '0 0 10px' }}>{svc.icon}</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 4px', lineHeight: 1.4 }}>{svc.name}</p>
+                <p style={{ fontSize: 11, color: '#9e998f', margin: '0 0 8px', lineHeight: 1.4 }}>{svc.desc}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#1D9E75', margin: 0 }}>{svc.price}</p>
+                <p style={{ fontSize: 10, color: '#9e998f', margin: '4px 0 0' }}>10% off for Pro/Enterprise</p>
+              </div>
+            </Link>
           ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Link href="/pricing/professional" style={{ fontSize: 13, color: '#1D9E75', fontWeight: 600, textDecoration: 'none' }}>
+            View full service details, inclusions &amp; book a quote →
+          </Link>
         </div>
       </div>
 

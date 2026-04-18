@@ -717,7 +717,11 @@ const PREMIUM_SERVICES: PremiumService[] = [
 ]
 
 function PremiumServices({ postcode, address }: { postcode: string; address: string }) {
-  const enquiryBase = `/?ref=property-report&postcode=${encodeURIComponent(postcode)}${address ? `&address=${encodeURIComponent(address)}` : ''}`
+  const params = [
+    postcode && `postcode=${encodeURIComponent(postcode)}`,
+    address  && `address=${encodeURIComponent(address)}`,
+  ].filter(Boolean).join('&')
+  const enquiryBase = `/pricing/professional${params ? `?${params}` : ''}`
 
   return (
     <div style={{ marginBottom: 16 }} className="print-card">
@@ -737,8 +741,8 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
             Professional checks for this property
           </p>
         </div>
-        <Link href="/#pricing" style={{ height: 38, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#f59e0b', color: '#1a1917', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-          View plans →
+        <Link href={enquiryBase} style={{ height: 38, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#f59e0b', color: '#1a1917', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+          View services →
         </Link>
       </div>
 
@@ -794,7 +798,7 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
                 <p style={{ fontSize: 11, color: '#9e998f', margin: 0 }}>⏱ {svc.timeline}</p>
               </div>
               <Link
-                href={`${enquiryBase}&service=${encodeURIComponent(svc.title)}`}
+                href={`${enquiryBase}${enquiryBase.includes('?') ? '&' : '?'}service=${encodeURIComponent(svc.title)}`}
                 style={{
                   display: 'block', width: '100%', padding: '10px 0', fontSize: 13, fontWeight: 600,
                   background: '#1D9E75', color: '#fff', borderRadius: 8, textDecoration: 'none',
@@ -813,8 +817,8 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
           <p style={{ fontSize: 13, color: '#5e5a52', margin: 0 }}>
             Get all four professional checks bundled — and save vs. booking separately.
           </p>
-          <Link href="/#pricing" style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#1a1917', color: '#fff', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            See bundle pricing →
+          <Link href={enquiryBase} style={{ height: 36, padding: '0 16px', fontSize: 13, fontWeight: 600, background: '#1a1917', color: '#fff', borderRadius: 8, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            See all services →
           </Link>
         </div>
       </div>
