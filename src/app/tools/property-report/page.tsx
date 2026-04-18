@@ -817,6 +817,7 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
@@ -833,7 +834,6 @@ function ChecklistItems({ items }: { items: { text: string; done: boolean }[] })
           <p style={{ fontSize: 12, color: item.done ? '#14532d' : '#5e5a52', margin: 0, lineHeight: 1.5 }}>{item.text}</p>
         </div>
       ))}
-      <Footer />
     </div>
   )
 }
