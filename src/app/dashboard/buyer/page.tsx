@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getUser, logout, type User } from '../../lib/auth'
 import { NavBar } from '../../components/NavBar'
+import { Footer } from '../../components/Footer'
 
 // ─── Quick-access tools ───────────────────────────────────────────────────────
 
@@ -87,18 +88,46 @@ export default function BuyerDashboard() {
     background: '#fff', border: '1px solid #e2ddd6', borderRadius: 14, padding: '20px 22px',
   }
 
+  const planColor = isPro
+    ? { bg: '#dcfce7', text: '#15803d', border: '#86efac' }
+    : { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' }
+
+  const BUYER_NAV = [
+    { label: 'Dashboard',       href: '/dashboard/buyer' },
+    { label: 'Property Report', href: '/tools/property-report' },
+    { label: 'Checklists',      href: '/tools/checklist' },
+    { label: 'Stamp Duty',      href: '/tools/stamp-duty' },
+    { label: 'Lease Extension', href: '/tools/lease-extension' },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <NavBar
+        logoHref="/dashboard/buyer"
         rightSlot={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: 13, color: '#5e5a52' }}>Hi, {user.name.split(' ')[0]}</span>
-            <button onClick={onSignOut} style={{ fontSize: 13, color: '#5e5a52', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-              Sign out
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {BUYER_NAV.map(l => (
+              <a key={l.href} href={l.href}
+                style={{ fontSize: 13, color: '#5e5a52', padding: '6px 10px', textDecoration: 'none', borderRadius: 8 }}
+              >
+                {l.label}
+              </a>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.04em', textTransform: 'uppercase', background: planColor.bg, color: planColor.text, border: `1px solid ${planColor.border}` }}>
+                {user.plan}
+              </span>
+              <span style={{ fontSize: 13, color: '#5e5a52' }}>{user.name.split(' ')[0]}</span>
+              <button onClick={onSignOut} style={{ fontSize: 13, color: '#5e5a52', background: 'none', border: '1px solid #e2ddd6', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                Sign out
+              </button>
+            </div>
           </div>
         }
-        mobileItems={[{ label: 'Sign out', onClick: onSignOut }]}
+        mobileItems={[
+          ...BUYER_NAV.map(l => ({ label: l.label, href: l.href })),
+          { label: 'Sign out', onClick: onSignOut },
+        ]}
       />
 
       <main style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px) 80px' }}>
@@ -214,6 +243,7 @@ export default function BuyerDashboard() {
         </div>
 
       </main>
+      <Footer />
     </div>
   )
 }

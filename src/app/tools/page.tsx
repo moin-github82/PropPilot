@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { NavBar } from '../components/NavBar'
+import { SiteNav } from '../components/SiteNav'
+import { Footer } from '../components/Footer'
 
 const tools = [
   {
@@ -69,16 +70,7 @@ const tools = [
 export default function ToolsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
-      <NavBar
-        rightSlot={<>
-          <Link href="/homebuyer" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>Homebuyer Check</Link>
-          <Link href="/" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to home</Link>
-        </>}
-        mobileItems={[
-          { label: 'Homebuyer Check', href: '/homebuyer' },
-          { label: '← Back to home',  href: '/' },
-        ]}
-      />
+      <SiteNav />
 
       <main style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 80px' }}>
         <div style={{ marginBottom: 48 }}>
@@ -113,6 +105,7 @@ export default function ToolsPage() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

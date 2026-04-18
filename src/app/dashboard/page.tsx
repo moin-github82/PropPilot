@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { NavBar } from '../components/NavBar'
+import { Footer } from '../components/Footer'
 import { getUser, getProperty, saveProperty, logout, clearProperty } from '../lib/auth'
 import type { User, StoredProperty } from '../lib/auth'
 
@@ -350,11 +351,11 @@ function PropertyCard({ property, onEdit }: { property: StoredProperty; onEdit: 
       {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
         <Link
-          href={`/homebuyer?postcode=${encodeURIComponent(property.postcode)}&address=${encodeURIComponent(property.address)}`}
+          href={`/tools/property-report?postcode=${encodeURIComponent(property.postcode)}&address=${encodeURIComponent(property.address)}`}
           className="btn-primary"
           style={{ fontSize: 13, padding: '9px 16px', whiteSpace: 'nowrap' }}
         >
-          Run full check
+          Run property report
         </Link>
         <button
           onClick={onEdit}
@@ -629,9 +630,9 @@ function QuickActions({ property }: { property: StoredProperty }) {
   const actions = [
     {
       icon: '🔍',
-      label: 'Property check',
-      sub: 'Full due diligence report',
-      href: `/homebuyer?postcode=${encodeURIComponent(property.postcode)}&address=${encodeURIComponent(property.address)}`,
+      label: 'Property report',
+      sub: 'Flood, EPC, crime & more',
+      href: `/tools/property-report?postcode=${encodeURIComponent(property.postcode)}&address=${encodeURIComponent(property.address)}`,
       highlight: true,
     },
     { icon: '🏷️', label: 'Stamp duty',     sub: 'SDLT calculator',        href: '/tools/stamp-duty',      highlight: false },
@@ -673,26 +674,43 @@ function QuickActions({ property }: { property: StoredProperty }) {
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 
+const OWNER_NAV_LINKS = [
+  { label: 'Dashboard',       href: '/dashboard' },
+  { label: 'Property report', href: '/tools/property-report' },
+  { label: 'Maintenance',     href: '/tools/maintenance' },
+  { label: 'Documents',       href: '/tools/documents' },
+  { label: 'EPC upgrade',     href: '/dashboard/epc-upgrade' },
+]
+
 function DashNav({ user, onSignOut }: { user: User; onSignOut: () => void }) {
+  const planColor = user.plan === 'free' ? { bg: '#f3f4f6', text: '#6b7280', border: '#e5e7eb' }
+                  : { bg: '#dcfce7', text: '#15803d', border: '#86efac' }
   return (
     <NavBar
-      rightSlot={<>
-        <Link href="/dashboard" style={{ fontSize: 13, fontWeight: 500, color: 'var(--slate-800)', padding: '6px 12px', borderRadius: 8, background: 'var(--slate-100)', textDecoration: 'none' }}>Dashboard</Link>
-        <Link href="/tools"     style={{ fontSize: 13, color: 'var(--slate-600)', padding: '6px 12px', textDecoration: 'none' }}>Tools</Link>
-        <Link href="/homebuyer" style={{ fontSize: 13, color: 'var(--slate-600)', padding: '6px 12px', textDecoration: 'none' }}>Homebuyer check</Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 4 }}>
-          <div style={{ background: 'var(--brand-400)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>PRO</div>
-          <span style={{ fontSize: 13, color: 'var(--slate-600)' }}>{user.name}</span>
-          <button onClick={onSignOut} style={{ fontSize: 13, color: 'var(--slate-500)', background: 'none', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>
-            Sign out
-          </button>
+      logoHref="/dashboard"
+      rightSlot={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {OWNER_NAV_LINKS.map(l => (
+            <Link key={l.href} href={l.href}
+              style={{ fontSize: 13, color: 'var(--slate-600)', padding: '6px 10px', textDecoration: 'none', borderRadius: 8 }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.04em', textTransform: 'uppercase', background: planColor.bg, color: planColor.text, border: `1px solid ${planColor.border}` }}>
+              {user.plan}
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--slate-600)' }}>{user.name.split(' ')[0]}</span>
+            <button onClick={onSignOut} style={{ fontSize: 13, color: 'var(--slate-500)', background: 'none', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+              Sign out
+            </button>
+          </div>
         </div>
-      </>}
+      }
       mobileItems={[
-        { label: 'Dashboard',       href: '/dashboard' },
-        { label: 'Tools',           href: '/tools'     },
-        { label: 'Homebuyer check', href: '/homebuyer' },
-        { label: 'Sign out',        onClick: onSignOut },
+        ...OWNER_NAV_LINKS.map(l => ({ label: l.label, href: l.href })),
+        { label: 'Sign out', onClick: onSignOut },
       ]}
     />
   )
@@ -742,7 +760,7 @@ export default function DashboardPage() {
   if (!ready || !user) return null  // avoid flash before auth check
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--slate-50)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--slate-50)', display: 'flex', flexDirection: 'column' }}>
       <DashNav user={user} onSignOut={handleSignOut} />
 
       {showSetup ? (
@@ -781,6 +799,7 @@ export default function DashboardPage() {
           )}
         </main>
       ) : null}
+      <Footer />
     </div>
   )
 }

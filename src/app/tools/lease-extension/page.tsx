@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import Link from 'next/link'
-import { NavBar } from '../../components/NavBar'
+import { SiteNav } from '../../components/SiteNav'
+import { Footer } from '../../components/Footer'
 
 // ─── Lease extension calculation (Leasehold Reform Act 1993) ──────────────────
 //
@@ -109,10 +109,7 @@ export default function LeaseExtensionPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
-      <NavBar
-        rightSlot={<Link href="/tools" style={{ fontSize: 13, color: '#5e5a52', textDecoration: 'none' }}>← Back to tools</Link>}
-        mobileItems={[{ label: '← Back to tools', href: '/tools' }]}
-      />
+      <SiteNav />
 
       <main style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 80px' }}>
         <div style={{ marginBottom: 36 }}>
@@ -216,6 +213,7 @@ export default function LeaseExtensionPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }
