@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { SiteNav } from '../../components/SiteNav'
@@ -147,6 +147,14 @@ const FAQS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProfessionalPricingPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#f8f7f4' }} />}>
+      <ProfessionalPricingContent />
+    </Suspense>
+  )
+}
+
+function ProfessionalPricingContent() {
   const searchParams  = useSearchParams()
   const highlightId   = searchParams?.get('service') ?? null
   const postcode      = searchParams?.get('postcode') ?? ''
