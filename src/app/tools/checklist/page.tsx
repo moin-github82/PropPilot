@@ -390,7 +390,7 @@ export default function ChecklistPage() {
   const activeList = CHECKLISTS.find(c => c.id === tab)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
       <main style={{ maxWidth: 860, margin: '0 auto', padding: 'clamp(32px,5vw,52px) clamp(16px,4vw,40px) 80px' }}>

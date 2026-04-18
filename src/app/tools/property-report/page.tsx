@@ -214,10 +214,10 @@ export default function PropertyReportPage() {
         }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+      <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
         <SiteNav />
 
-        <main style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px) 80px' }}>
+        <main style={{ maxWidth: 760, margin: '0 auto', width: '100%', flex: 1, padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px) 80px' }}>
 
           {/* Header */}
           <div style={{ marginBottom: 32 }} className="no-print">
@@ -626,6 +626,7 @@ export default function PropertyReportPage() {
             </div>
           )}
         </main>
+        <Footer />
       </div>
     </>
   )
@@ -817,7 +818,6 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
           </Link>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }

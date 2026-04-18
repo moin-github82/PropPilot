@@ -69,7 +69,7 @@ const tools = [
 
 export default function ToolsPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
       <main style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 80px' }}>

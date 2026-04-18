@@ -92,7 +92,7 @@ export default function DocumentsPage() {
   const totalSize  = docs.reduce((sum, d) => sum + d.sizeBytes, 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
       <main style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px) 80px' }}>

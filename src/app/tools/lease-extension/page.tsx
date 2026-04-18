@@ -108,7 +108,7 @@ export default function LeaseExtensionPage() {
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 500, color: '#5e5a52', display: 'block', marginBottom: 6 }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f7f4' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
       <main style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(32px,5vw,56px) clamp(16px,4vw,40px) 80px' }}>
