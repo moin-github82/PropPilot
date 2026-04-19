@@ -2,7 +2,7 @@
  * API client — points at the live Vercel deployment.
  * Change BASE_URL to your deployed URL or http://localhost:3000 for local dev.
  */
-const BASE_URL = 'https://prop-pilot.vercel.app'
+const BASE_URL = 'https://prop-pilot-psi.vercel.app'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`)
