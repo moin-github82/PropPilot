@@ -1,0 +1,15 @@
+export const C = {
+  green:       '#1D9E75',
+  greenLight:  '#f0fdf4',
+  greenBorder: '#86efac',
+  dark:        '#1a1917',
+  mid:         '#5e5a52',
+  light:       '#9e998f',
+  bg:          '#f8f7f4',
+  card:        '#ffffff',
+  border:      '#e2ddd6',
+  amber:       '#f59e0b',
+  amberLight:  '#fef9c3',
+  red:         '#ef4444',
+  redLight:    '#fef2f2',
+} as const

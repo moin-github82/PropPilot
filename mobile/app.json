@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "PropPilot",
+    "slug": "proppilot",
+    "version": "1.0.0",
+    "scheme": "proppilot",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f8f7f4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "co.uk.proppilot.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f8f7f4"
+      },
+      "package": "co.uk.proppilot.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
