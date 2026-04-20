@@ -32,3 +32,8 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+#Document
+*.docx
+*.pdf
+*.pptx

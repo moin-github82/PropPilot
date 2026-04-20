@@ -123,7 +123,7 @@ export default function SignupPage() {
             What brings you here?
           </h1>
           <p style={{ fontSize: 14, color: '#666', marginBottom: 32, textAlign: 'center' }}>
-            Choose your role to get started with PropPilot
+            Choose your role to get started with PropHealth
           </p>
 
           {/* Role cards */}

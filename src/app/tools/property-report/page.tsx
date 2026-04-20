@@ -650,7 +650,7 @@ const PREMIUM_SERVICES: PremiumService[] = [
     icon:        '⚖️',
     title:       'Title Register & Legal Checks',
     subtitle:    'Conveyancing solicitor review',
-    description: 'A PropPilot-vetted conveyancing solicitor reviews the official title register, checks for restrictive covenants, boundary disputes, planning enforcement notices, and any charges or restrictions on the property.',
+    description: 'A PropHealth-vetted conveyancing solicitor reviews the official title register, checks for restrictive covenants, boundary disputes, planning enforcement notices, and any charges or restrictions on the property.',
     includes:    [
       'Official title register & title plan (HMLR)',
       'Restrictive covenants & easements review',
@@ -734,7 +734,7 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f59e0b' }}>PropPilot Premium</span>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f59e0b' }}>PropHealth Premium</span>
             <span style={{ fontSize: 11, background: '#f59e0b', color: '#1a1917', borderRadius: 20, padding: '1px 8px', fontWeight: 700 }}>Add-on services</span>
           </div>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: '#fff', margin: 0 }}>
@@ -807,7 +807,7 @@ function PremiumServices({ postcode, address }: { postcode: string; address: str
               >
                 Get a quote →
               </Link>
-              <p style={{ fontSize: 11, color: '#9e998f', margin: '6px 0 0' }}>PropPilot-vetted professionals</p>
+              <p style={{ fontSize: 11, color: '#9e998f', margin: '6px 0 0' }}>PropHealth-vetted professionals</p>
             </div>
           </div>
         ))}

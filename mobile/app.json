@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "PropPilot",
-    "slug": "proppilot",
+    "name": "PropHealth",
+    "slug": "prophealth",
     "version": "1.0.0",
-    "scheme": "proppilot",
+    "scheme": "prophealth",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "co.uk.proppilot.app"
+      "bundleIdentifier": "co.uk.prophealth.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#f8f7f4"
       },
-      "package": "co.uk.proppilot.app"
+      "package": "co.uk.prophealth.app"
     },
     "web": {
       "bundler": "metro",

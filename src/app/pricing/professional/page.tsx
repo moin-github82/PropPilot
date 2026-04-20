@@ -30,7 +30,7 @@ const SERVICES: Service[] = [
     title:       'Title Register & Legal Checks',
     subtitle:    'Conveyancing solicitor review',
     badge:       'Most requested',
-    description: 'A PropPilot-vetted conveyancing solicitor reviews the official title register, checks for restrictive covenants, boundary disputes, planning enforcement notices, and any charges or restrictions on the property.',
+    description: 'A PropHealth-vetted conveyancing solicitor reviews the official title register, checks for restrictive covenants, boundary disputes, planning enforcement notices, and any charges or restrictions on the property.',
     includes: [
       'Official title register & title plan (HMLR)',
       'Restrictive covenants & easements review',
@@ -108,7 +108,7 @@ const SERVICES: Service[] = [
 
 const BUNDLE = {
   title:       'Full Due Diligence Bundle',
-  description: 'All four checks arranged and coordinated by PropPilot — one point of contact, no chasing individual contractors.',
+  description: 'All four checks arranged and coordinated by PropHealth — one point of contact, no chasing individual contractors.',
   priceRange:  '£1,400 – £2,800',
   saving:      'Save up to £350 vs. booking individually',
   includes: [
@@ -116,14 +116,14 @@ const BUNDLE = {
     'RICS Structural Survey',
     'Gas Safety Certificate (CP12)',
     'EICR Electrical Report',
-    'Dedicated PropPilot coordinator',
+    'Dedicated PropHealth coordinator',
     'Single combined PDF summary',
   ],
 }
 
 const FAQS = [
   {
-    q: 'Are these professionals vetted by PropPilot?',
+    q: 'Are these professionals vetted by PropHealth?',
     a: 'Yes — all surveyors, solicitors, and engineers in our network are regulated professionals. Surveyors hold RICS accreditation, solicitors are SRA-regulated, and engineers are Gas Safe and NICEIC registered.',
   },
   {
@@ -136,7 +136,7 @@ const FAQS = [
   },
   {
     q: 'How do I book once I request a quote?',
-    a: 'After submitting your enquiry, a PropPilot coordinator will be in touch within one working day to confirm your requirements, match you with the right professional, and arrange a convenient time.',
+    a: 'After submitting your enquiry, a PropHealth coordinator will be in touch within one working day to confirm your requirements, match you with the right professional, and arrange a convenient time.',
   },
   {
     q: 'Can I book just one service, or do I need the bundle?',
@@ -173,8 +173,8 @@ function ProfessionalPricingContent() {
   ].filter(Boolean).join('&')
 
   const quoteHref = (svcId: string) =>
-    `mailto:hello@proppilot.co.uk?subject=${encodeURIComponent(`Quote request — ${SERVICES.find(s => s.id === svcId)?.title ?? svcId}`)}&body=${encodeURIComponent([
-      `Hi PropPilot,`,
+    `mailto:hello@prophealth.co.uk?subject=${encodeURIComponent(`Quote request — ${SERVICES.find(s => s.id === svcId)?.title ?? svcId}`)}&body=${encodeURIComponent([
+      `Hi PropHealth,`,
       ``,
       `I'd like a quote for: ${SERVICES.find(s => s.id === svcId)?.title}`,
       postcode ? `Property postcode: ${postcode}` : '',
@@ -186,8 +186,8 @@ function ProfessionalPricingContent() {
     ].filter(l => l !== undefined).join('\n'))}`
 
   const bundleHref =
-    `mailto:hello@proppilot.co.uk?subject=${encodeURIComponent('Quote request — Full Due Diligence Bundle')}&body=${encodeURIComponent([
-      `Hi PropPilot,`,
+    `mailto:hello@prophealth.co.uk?subject=${encodeURIComponent('Quote request — Full Due Diligence Bundle')}&body=${encodeURIComponent([
+      `Hi PropHealth,`,
       ``,
       `I'd like a quote for the Full Due Diligence Bundle (all four checks).`,
       postcode ? `Property postcode: ${postcode}` : '',
@@ -213,12 +213,12 @@ function ProfessionalPricingContent() {
             <span style={{ color: '#d1cdc7', fontSize: 12 }}>›</span>
             <span style={{ fontSize: 12, color: '#1a1917', fontWeight: 500 }}>Professional services</span>
           </div>
-          <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 10 }}>PropPilot Premium</span>
+          <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 10 }}>PropHealth Premium</span>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 500, color: '#1a1917', margin: '0 0 14px' }}>
             Professional checks & services
           </h1>
           <p style={{ fontSize: 15, color: '#5e5a52', lineHeight: 1.7, maxWidth: 580, margin: '0 0 20px' }}>
-            Vetted UK professionals — conveyancing solicitors, RICS surveyors, Gas Safe engineers, and electricians — coordinated through PropPilot. Book individually or as a bundle.
+            Vetted UK professionals — conveyancing solicitors, RICS surveyors, Gas Safe engineers, and electricians — coordinated through PropHealth. Book individually or as a bundle.
           </p>
 
           {/* Pro discount notice */}

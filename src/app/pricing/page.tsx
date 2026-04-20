@@ -90,7 +90,7 @@ const BUYER_PLANS: Plan[] = [
     ],
     notIncluded: [],
     cta: 'Contact sales',
-    ctaHref: 'mailto:hello@proppilot.co.uk',
+    ctaHref: 'mailto:hello@prophealth.co.uk',
     ctaStyle: 'dark',
   },
 ]
@@ -165,7 +165,7 @@ const OWNER_PLANS: Plan[] = [
     ],
     notIncluded: [],
     cta: 'Contact sales',
-    ctaHref: 'mailto:hello@proppilot.co.uk',
+    ctaHref: 'mailto:hello@prophealth.co.uk',
     ctaStyle: 'dark',
   },
 ]
@@ -422,7 +422,7 @@ export default function PricingPage() {
       <div style={{ maxWidth: 860, margin: '0 auto', padding: 'clamp(40px,5vw,64px) clamp(16px,4vw,40px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9e998f', display: 'block', marginBottom: 8 }}>Add-on services</span>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 500, color: '#1a1917', margin: '0 0 8px' }}>Professional services — vetted &amp; booked through PropPilot</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 500, color: '#1a1917', margin: '0 0 8px' }}>Professional services — vetted &amp; booked through PropHealth</h2>
           <p style={{ fontSize: 14, color: '#9e998f', margin: 0 }}>Pro &amp; Enterprise members get 10% off all bookings.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14 }}>
@@ -470,7 +470,7 @@ export default function PricingPage() {
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 500, color: '#fff', margin: '0 0 12px' }}>
           Start free — no credit card needed
         </h2>
-        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', margin: '0 0 28px' }}>Join thousands of buyers and owners using PropPilot.</p>
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', margin: '0 0 28px' }}>Join thousands of buyers and owners using PropHealth.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/signup?role=buyer" style={{ padding: '12px 24px', background: '#1D9E75', color: '#fff', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
             🏡 I&apos;m buying a home →

@@ -1,6 +1,6 @@
-# PropPilot Mobile
+# PropHealth Mobile
 
-React Native (Expo Router) app for PropPilot — the UK property due diligence platform.
+React Native (Expo Router) app for PropHealth — the UK property due diligence platform.
 
 ## Features
 
@@ -89,7 +89,7 @@ mobile/
 ├── lib/
 │   ├── auth.ts              # AsyncStorage-based auth (mirrors web localStorage auth)
 │   ├── api.ts               # Fetch client → Vercel API routes
-│   └── colours.ts           # PropPilot design tokens
+│   └── colours.ts           # PropHealth design tokens
 ├── app.json                 # Expo config
 ├── package.json
 └── tsconfig.json

@@ -76,7 +76,7 @@ export default function LoginPage() {
           Sign in to your account
         </h1>
         <p style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>
-          Sign in to your PropPilot account
+          Sign in to your PropHealth account
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -211,7 +211,7 @@ export default function LoginPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 0 }}>
           {/* Homeowner demo */}
           <div
-            onClick={() => fillDemo('demo@proppilot.com')}
+            onClick={() => fillDemo('demo@prophealth.com')}
             style={{
               background: '#f0fdf4',
               border: '1px dashed #86efac',
@@ -227,7 +227,7 @@ export default function LoginPage() {
               🏠 Homeowner
             </p>
             <p style={{ fontSize: 12, color: '#22c55e', margin: '2px 0', fontFamily: 'monospace' }}>
-              demo@proppilot.com
+              demo@prophealth.com
             </p>
             <p style={{ fontSize: 11, color: '#1D9E75', marginTop: 8, marginBottom: 0 }}>
               Click to fill →
@@ -236,7 +236,7 @@ export default function LoginPage() {
 
           {/* HomeBuyer demo */}
           <div
-            onClick={() => fillDemo('buyer@proppilot.com')}
+            onClick={() => fillDemo('buyer@prophealth.com')}
             style={{
               background: '#f0fdf4',
               border: '1px dashed #86efac',
@@ -252,7 +252,7 @@ export default function LoginPage() {
               🏡 Home Buyer
             </p>
             <p style={{ fontSize: 12, color: '#22c55e', margin: '2px 0', fontFamily: 'monospace' }}>
-              buyer@proppilot.com
+              buyer@prophealth.com
             </p>
             <p style={{ fontSize: 11, color: '#1D9E75', marginTop: 8, marginBottom: 0 }}>
               Click to fill →
@@ -270,7 +270,7 @@ export default function LoginPage() {
       </p>
 
       <p style={{ fontSize: 13, color: '#999', marginTop: 16 }}>
-        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropPilot.co.uk</Link>
+        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropHealth.co.uk</Link>
       </p>
     </div>
   )

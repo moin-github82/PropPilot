@@ -29,10 +29,10 @@ export interface StoredProperty {
 
 // Demo users — two buyer and two owner accounts
 const DEMO_USERS: Array<User & { password: string }> = [
-  { email: 'demo@proppilot.com', password: 'PropDemo2024', name: 'Demo User', role: 'owner', plan: 'pro' },
+  { email: 'demo@prophealth.com', password: 'PropDemo2024', name: 'Demo User', role: 'owner', plan: 'pro' },
   { email: 'moin.siddiqui1982@gmail.com', password: 'PropDemo2024', name: 'Moin', role: 'owner', plan: 'pro' },
-  { email: 'buyer@proppilot.com', password: 'PropDemo2024', name: 'Demo Buyer', role: 'buyer', plan: 'pro' },
-  { email: 'agent@proppilot.com', password: 'PropDemo2024', name: 'Demo Agent', role: 'buyer', plan: 'enterprise' },
+  { email: 'buyer@prophealth.com', password: 'PropDemo2024', name: 'Demo Buyer', role: 'buyer', plan: 'pro' },
+  { email: 'agent@prophealth.com', password: 'PropDemo2024', name: 'Demo Agent', role: 'buyer', plan: 'enterprise' },
 ]
 
 const AUTH_KEY = 'pp_auth'

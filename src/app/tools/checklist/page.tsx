@@ -692,7 +692,7 @@ export default function ChecklistPage() {
         {/* Footer note */}
         <div style={{ marginTop: 28, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '14px 16px' }}>
           <p style={{ fontSize: 12, color: '#451a03', margin: 0, lineHeight: 1.6 }}>
-            <strong>Browser storage:</strong> Your checklist progress and scores are saved in your browser and are private to this device. They will be lost if you clear your browser data. <Link href="/login" style={{ color: '#92400e' }}>Sign in to PropPilot</Link> to get cloud-synced progress saving.
+            <strong>Browser storage:</strong> Your checklist progress and scores are saved in your browser and are private to this device. They will be lost if you clear your browser data. <Link href="/login" style={{ color: '#92400e' }}>Sign in to PropHealth</Link> to get cloud-synced progress saving.
           </p>
         </div>
       </main>

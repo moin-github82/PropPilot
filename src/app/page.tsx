@@ -45,7 +45,7 @@ function Hero() {
       </div>
       <h1 className="fade-up-d1" style={{ fontSize: 'clamp(32px, 5vw, 60px)', fontWeight: 500, color: 'var(--slate-900)', marginBottom: 20, lineHeight: 1.15 }}>
         Whether you&apos;re buying or you already own —<br />
-        <em style={{ fontStyle: 'italic', color: '#1D9E75' }}>PropPilot has you covered.</em>
+        <em style={{ fontStyle: 'italic', color: '#1D9E75' }}>PropHealth has you covered.</em>
       </h1>
       <p className="fade-up-d2" style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'var(--slate-600)', lineHeight: 1.7, maxWidth: 580, margin: '0 auto 40px' }}>
         Free tools and professional services for every stage of your property journey — from the first viewing to the decade you spend living there.
@@ -325,7 +325,7 @@ function FinalCTA() {
 function Footer() {
   return (
     <footer style={{ background: 'var(--slate-900)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '24px clamp(16px,4vw,40px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-      <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>PropPilot</span>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>PropHealth</span>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
         <Link href="/pricing" style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Pricing</Link>
         <Link href="/tools"   style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Free tools</Link>

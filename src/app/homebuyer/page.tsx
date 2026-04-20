@@ -325,7 +325,7 @@ function ReportView({ report }: { report: HomebuyerReport }) {
 
       {/* CTA */}
       <div style={{ background: '#f8f7f4', border: '1px solid #e2ddd6', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
-        <p style={{ fontSize: 14, fontWeight: 500, color: '#1a1917', margin: '0 0 6px' }}>Once you buy — track it with PropPilot</p>
+        <p style={{ fontSize: 14, fontWeight: 500, color: '#1a1917', margin: '0 0 6px' }}>Once you buy — track it with PropHealth</p>
         <p style={{ fontSize: 13, color: '#5e5a52', margin: '0 0 16px', lineHeight: 1.6 }}>Get ongoing maintenance alerts, EPC upgrade planning, and remortgage radar — all in one place.</p>
         <Link href="/#waitlist" style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,

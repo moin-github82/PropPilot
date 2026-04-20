@@ -495,9 +495,9 @@ function ServiceCard({ s }: { s: Service }) {
   )
 }
 
-// ─── PropPilot support section ────────────────────────────────────────────────
+// ─── PropHealth support section ────────────────────────────────────────────────
 
-function PropPilotSupport({ property }: { property: StoredProperty }) {
+function PropHealthSupport({ property }: { property: StoredProperty }) {
   const supports = [
     {
       icon: '🔍',
@@ -531,7 +531,7 @@ function PropPilotSupport({ property }: { property: StoredProperty }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--slate-900)', marginBottom: 6 }}>How PropPilot supports you</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--slate-900)', marginBottom: 6 }}>How PropHealth supports you</h2>
       <p style={{ fontSize: 14, color: 'var(--slate-500)', marginBottom: 20 }}>
         We help you plan, track, and document your entire EPC improvement journey in one place.
       </p>
@@ -704,9 +704,9 @@ export default function EPCUpgradePage() {
           )}
         </div>
 
-        {/* PropPilot support */}
+        {/* PropHealth support */}
         <div className="fade-up-d3">
-          <PropPilotSupport property={property} />
+          <PropHealthSupport property={property} />
         </div>
 
         {/* Third-party services */}
@@ -715,7 +715,7 @@ export default function EPCUpgradePage() {
             Trusted third-party services
           </h2>
           <p style={{ fontSize: 14, color: 'var(--slate-500)', marginBottom: 24 }}>
-            PropPilot is independent — we have no commercial relationship with any of these providers. Always get at least 3 quotes.
+            PropHealth is independent — we have no commercial relationship with any of these providers. Always get at least 3 quotes.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
@@ -739,7 +739,7 @@ export default function EPCUpgradePage() {
           background: 'var(--slate-100)', borderRadius: 'var(--radius-md)',
           padding: '16px 20px', fontSize: 12, color: 'var(--slate-500)', lineHeight: 1.6,
         }}>
-          <strong style={{ color: 'var(--slate-600)' }}>Disclaimer:</strong> Cost estimates are illustrative ranges based on industry data and may vary significantly depending on property size, location, and condition. Grant eligibility is subject to scheme rules which change regularly — always confirm with the scheme administrator or an independent adviser. PropPilot is not a financial adviser.
+          <strong style={{ color: 'var(--slate-600)' }}>Disclaimer:</strong> Cost estimates are illustrative ranges based on industry data and may vary significantly depending on property size, location, and condition. Grant eligibility is subject to scheme rules which change regularly — always confirm with the scheme administrator or an independent adviser. PropHealth is not a financial adviser.
         </div>
 
       </main>

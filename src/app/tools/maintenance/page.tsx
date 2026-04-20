@@ -72,13 +72,13 @@ export default function MaintenancePage() {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('proppilot-maintenance')
+      const saved = localStorage.getItem('prophealth-maintenance')
       if (saved) {
         setTasks(JSON.parse(saved))
       } else {
         const defaults = DEFAULT_TASKS.map(newTask)
         setTasks(defaults)
-        localStorage.setItem('proppilot-maintenance', JSON.stringify(defaults))
+        localStorage.setItem('prophealth-maintenance', JSON.stringify(defaults))
       }
     } catch {
       setTasks(DEFAULT_TASKS.map(newTask))
@@ -87,7 +87,7 @@ export default function MaintenancePage() {
 
   const save = (updated: MaintenanceTask[]) => {
     setTasks(updated)
-    try { localStorage.setItem('proppilot-maintenance', JSON.stringify(updated)) } catch {}
+    try { localStorage.setItem('prophealth-maintenance', JSON.stringify(updated)) } catch {}
   }
 
   const markDone = (id: string) => {
@@ -218,7 +218,7 @@ export default function MaintenancePage() {
         </div>
 
         <p style={{ fontSize: 11, color: '#9e998f', marginTop: 24, lineHeight: 1.6 }}>
-          Tasks are saved in your browser. For reminders across devices, join the PropPilot waitlist.
+          Tasks are saved in your browser. For reminders across devices, join the PropHealth waitlist.
         </p>
       </main>
       <Footer />

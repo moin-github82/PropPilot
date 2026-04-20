@@ -23,7 +23,7 @@ const LINKS = {
     { label: 'Pricing',           href: '/pricing' },
     { label: 'Sign up',           href: '/signup' },
     { label: 'Sign in',           href: '/login' },
-    { label: 'Contact',           href: 'mailto:hello@proppilot.co.uk' },
+    { label: 'Contact',           href: 'mailto:hello@prophealth.co.uk' },
   ],
 }
 
@@ -89,7 +89,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <p style={{ fontSize: 12, color: '#5e5a52', margin: 0 }}>
-            © {YEAR} PropPilot Ltd. Property data is provided for informational purposes only and does not constitute professional advice.
+            © {YEAR} PropHealth Ltd. Property data is provided for informational purposes only and does not constitute professional advice.
           </p>
           <div style={{ display: 'flex', gap: 20 }}>
             {['Privacy', 'Terms', 'Cookies'].map(l => (

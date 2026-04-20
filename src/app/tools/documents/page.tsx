@@ -31,7 +31,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const STORAGE_KEY = 'proppilot-documents'
+const STORAGE_KEY = 'prophealth-documents'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -179,7 +179,7 @@ export default function DocumentsPage() {
 
         <div style={{ marginTop: 24, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, padding: '14px 16px' }}>
           <p style={{ fontSize: 12, color: '#451a03', margin: 0, lineHeight: 1.6 }}>
-            <strong>Browser storage:</strong> Documents are saved in your browser&apos;s local storage and are private to this device. They will be lost if you clear your browser data. Join the PropPilot waitlist to get cloud-synced document storage.
+            <strong>Browser storage:</strong> Documents are saved in your browser&apos;s local storage and are private to this device. They will be lost if you clear your browser data. Join the PropHealth waitlist to get cloud-synced document storage.
           </p>
         </div>
       </main>

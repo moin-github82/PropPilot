@@ -1,4 +1,4 @@
-# PropPilot
+# PropHealth
 
 AI home intelligence platform for UK homeowners.
 
