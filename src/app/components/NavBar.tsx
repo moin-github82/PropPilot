@@ -35,7 +35,7 @@ export function NavBar({ logoHref = '/', rightSlot, mobileItems }: NavBarProps) 
     <>
       <nav className="pp-nav">
         <Link href={logoHref} className="pp-nav-logo">
-          Prop<span style={{ color: 'var(--brand-400)' }}>Pilot</span>
+          Prop<span style={{ color: 'var(--brand-400)' }}>Health</span>
         </Link>
 
         {/* Desktop links */}
