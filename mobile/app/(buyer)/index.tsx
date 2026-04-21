@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator,
+  StyleSheet, ActivityIndicator, Linking,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -23,6 +23,14 @@ const PREMIUM = [
   { icon: '🏗️', label: 'RICS Survey',       price: 'from £500' },
   { icon: '🔥', label: 'Gas Safety (CP12)', price: 'from £60'  },
   { icon: '⚡', label: 'EICR Electrical',   price: 'from £150' },
+]
+
+const OWNER_PREVIEW = [
+  { icon: '📊', label: 'Property Dashboard',  desc: 'Live value, equity & full property overview' },
+  { icon: '🔧', label: 'Maintenance Calendar', desc: 'Reminders before things break' },
+  { icon: '⚡', label: 'EPC Upgrade Planner',  desc: 'Grants, costs & Band C roadmap' },
+  { icon: '🏦', label: 'Mortgage Radar',        desc: 'Alerts when your fixed rate ends' },
+  { icon: '📁', label: 'Document Vault',        desc: 'All your certs & docs in one place' },
 ]
 
 export default function BuyerDashboard() {
@@ -56,7 +64,7 @@ export default function BuyerDashboard() {
 
         {/* Header */}
         <View style={s.topBar}>
-          <Text style={s.wordmark}>Prop<Text style={s.green}>Pilot</Text></Text>
+          <Text style={s.wordmark}>Prop<Text style={s.green}>Health</Text></Text>
           <View style={s.topRight}>
             <PlanBadge plan={user.plan} />
             <TouchableOpacity onPress={handleSignOut} style={s.signOutBtn}>
@@ -115,6 +123,46 @@ export default function BuyerDashboard() {
             </View>
           ))}
         </Card>
+
+        {/* HomeOwner preview */}
+        <View style={s.ownerPreviewBanner}>
+          <Text style={s.ownerPreviewEyebrow}>Coming soon for you 🏠</Text>
+          <Text style={s.ownerPreviewTitle}>Your HomeOwner plan unlocks after completion</Text>
+          <Text style={s.ownerPreviewBody}>
+            Switch seamlessly to PropHealth HomeOwner Pro — the single hub for managing your home long-term.
+          </Text>
+          <View style={s.ownerPreviewPriceRow}>
+            <View style={s.ownerPreviewPriceBox}>
+              <Text style={s.ownerPreviewPriceLabel}>Monthly</Text>
+              <Text style={s.ownerPreviewPrice}>£9<Text style={s.ownerPreviewPricePer}>/mo</Text></Text>
+            </View>
+            <View style={[s.ownerPreviewPriceBox, { backgroundColor: C.green, borderColor: C.green }]}>
+              <Text style={[s.ownerPreviewPriceLabel, { color: 'rgba(255,255,255,0.75)' }]}>Annual — save 31%</Text>
+              <Text style={[s.ownerPreviewPrice, { color: '#fff' }]}>£75<Text style={[s.ownerPreviewPricePer, { color: 'rgba(255,255,255,0.7)' }]}>/yr</Text></Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={s.ownerPreviewBtn}
+            onPress={() => Linking.openURL('https://prophealth.co.uk/pricing?role=owner')}
+          >
+            <Text style={s.ownerPreviewBtnText}>Preview HomeOwner Pro →</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ gap: 8, marginBottom: 4 }}>
+          {OWNER_PREVIEW.map(f => (
+            <View key={f.label} style={s.ownerFeatureRow}>
+              <Text style={s.ownerFeatureIcon}>{f.icon}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.ownerFeatureLabel}>{f.label}</Text>
+                <Text style={s.ownerFeatureDesc}>{f.desc}</Text>
+              </View>
+              <View style={s.ownerFeatureBadge}>
+                <Text style={s.ownerFeatureBadgeText}>After keys</Text>
+              </View>
+            </View>
+          ))}
+        </View>
 
         {/* Account card */}
         <Card style={s.accountCard}>
@@ -179,4 +227,22 @@ const s = StyleSheet.create({
   accountItem:    { width: '45%' },
   accountLabel:   { fontSize: 11, color: C.light, marginBottom: 2 },
   accountValue:   { fontSize: 13, fontWeight: '500', color: C.dark },
+  // HomeOwner preview
+  ownerPreviewBanner:    { backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#86efac', borderRadius: 16, padding: 16, marginTop: 20, marginBottom: 10 },
+  ownerPreviewEyebrow:   { fontSize: 10, fontWeight: '700', color: C.green, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 },
+  ownerPreviewTitle:     { fontSize: 16, fontWeight: '700', color: '#14532d', marginBottom: 6 },
+  ownerPreviewBody:      { fontSize: 12, color: '#166534', lineHeight: 18, marginBottom: 12 },
+  ownerPreviewPriceRow:  { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  ownerPreviewPriceBox:  { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#86efac', borderRadius: 10, padding: 10, alignItems: 'center' },
+  ownerPreviewPriceLabel:{ fontSize: 10, color: '#9e998f', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 },
+  ownerPreviewPrice:     { fontSize: 18, fontWeight: '800', color: '#1a1917' },
+  ownerPreviewPricePer:  { fontSize: 11, fontWeight: '400', color: '#9e998f' },
+  ownerPreviewBtn:       { backgroundColor: C.green, borderRadius: 9, padding: 12, alignItems: 'center' },
+  ownerPreviewBtnText:   { fontSize: 13, fontWeight: '700', color: '#fff' },
+  ownerFeatureRow:       { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.border, borderRadius: 12, padding: 12, gap: 12 },
+  ownerFeatureIcon:      { fontSize: 20 },
+  ownerFeatureLabel:     { fontSize: 13, fontWeight: '600', color: C.dark, marginBottom: 2 },
+  ownerFeatureDesc:      { fontSize: 11, color: C.light, lineHeight: 16 },
+  ownerFeatureBadge:     { backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#86efac', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  ownerFeatureBadgeText: { fontSize: 9, fontWeight: '700', color: '#15803d', textTransform: 'uppercase', letterSpacing: 0.3 },
 })

@@ -8,7 +8,10 @@ import { NavBar } from '../components/NavBar'
 
 interface Plan {
   name: string
-  price: string
+  price: string          // monthly display e.g. "£19"
+  priceAnnual?: string   // annual equivalent per-month display e.g. "£13"
+  annualTotal?: string   // full annual charge e.g. "£159"
+  annualSaving?: string  // saving note e.g. "Save £69 (30% off)"
   period: string
   annual?: string | null
   tag: string | null
@@ -49,8 +52,11 @@ const BUYER_PLANS: Plan[] = [
   {
     name: 'Pro',
     price: '£19',
+    priceAnnual: '£13.25',
+    annualTotal: '£159',
+    annualSaving: 'Save £69 — 30% off',
     period: '/month',
-    annual: '£149/yr — save 35%',
+    annual: '£159/yr — save 30%',
     tag: 'Most popular',
     color: '#1D9E75',
     features: [
@@ -74,8 +80,11 @@ const BUYER_PLANS: Plan[] = [
   {
     name: 'Enterprise',
     price: '£79',
+    priceAnnual: '£19.58',
+    annualTotal: '£235',
+    annualSaving: 'Save £113 — 33% off',
     period: '/month',
-    annual: null,
+    annual: '£235/yr — save 33%',
     tag: null,
     color: '#1a1917',
     features: [
@@ -122,8 +131,11 @@ const OWNER_PLANS: Plan[] = [
   {
     name: 'Pro',
     price: '£9',
+    priceAnnual: '£6.25',
+    annualTotal: '£75',
+    annualSaving: 'Save £33 — 31% off',
     period: '/month',
-    annual: '£79/yr — save 27%',
+    annual: '£75/yr — save 31%',
     tag: 'Most popular',
     color: '#1D9E75',
     features: [
@@ -149,8 +161,11 @@ const OWNER_PLANS: Plan[] = [
   {
     name: 'Enterprise',
     price: '£29',
+    priceAnnual: '£19.58',
+    annualTotal: '£235',
+    annualSaving: 'Save £113 — 33% off',
     period: '/month',
-    annual: null,
+    annual: '£235/yr — save 33%',
     tag: null,
     color: '#1a1917',
     features: [
@@ -178,8 +193,9 @@ const PROF_SERVICES = [
 ]
 
 const FAQS = [
-  { q: 'Can I switch between HomeBuyer and HomeOwner?', a: 'Yes — once you complete your purchase, contact support and we\'ll upgrade your account to a HomeOwner plan and migrate your data.' },
+  { q: 'Can I switch from HomeBuyer to HomeOwner after I complete?', a: 'Yes — and it\'s seamless. When you mark "offer accepted" in your buying checklist, we\'ll prompt you to preview your HomeOwner plan and lock in your upgrade. Annual HomeBuyer members get their first month of HomeOwner Pro free after completion.' },
   { q: 'Is there a free trial for Pro?', a: 'Yes. All Pro plans come with a 14-day free trial. No credit card required to start.' },
+  { q: 'What\'s the benefit of paying annually?', a: 'Annual plans save you 30–33% compared to month-by-month pricing. HomeBuyer Pro drops from £228/yr to £159/yr (saving £69). HomeOwner Pro drops from £108/yr to £75/yr (saving £33). Annual plans also guarantee your price won\'t change for 12 months.' },
   { q: 'How do professional services work?', a: 'We connect you with vetted, locally-based professionals. You receive quotes, compare, and choose who to instruct — Pro/Enterprise members receive 10% off all bookings.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Monthly plans cancel with one click — no notice period, no exit fees. Annual plans are non-refundable after 14 days.' },
   { q: 'Do HomeBuyer and HomeOwner plans include the same professional services?', a: 'Professional services are available to all paid plans. HomeBuyer Pro focuses on pre-purchase services (legal, survey, gas cert, EICR). HomeOwner Pro adds ongoing compliance reminders and maintenance alerts.' },
@@ -187,8 +203,9 @@ const FAQS = [
 
 // ─── Plan card ────────────────────────────────────────────────────────────────
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan, billing }: { plan: Plan; billing: 'monthly' | 'annual' }) {
   const isPopular = plan.tag === 'Most popular'
+  const showAnnual = billing === 'annual' && plan.annualTotal
   return (
     <div style={{
       position: 'relative',
@@ -211,13 +228,37 @@ function PlanCard({ plan }: { plan: Plan }) {
 
       <div style={{ marginBottom: 20 }}>
         <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9e998f', margin: '0 0 6px' }}>{plan.name}</p>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 500, color: '#1a1917' }}>{plan.price}</span>
-          {plan.period !== 'forever' && <span style={{ fontSize: 14, color: '#9e998f' }}>{plan.period}</span>}
-          {plan.period === 'forever' && <span style={{ fontSize: 14, color: '#9e998f' }}>forever</span>}
-        </div>
-        {plan.annual && (
-          <p style={{ fontSize: 12, color: plan.color, fontWeight: 600, margin: 0 }}>or {plan.annual}</p>
+        {plan.period === 'forever' ? (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 500, color: '#1a1917' }}>{plan.price}</span>
+            <span style={{ fontSize: 14, color: '#9e998f' }}>forever</span>
+          </div>
+        ) : showAnnual ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 2 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 500, color: '#1a1917' }}>{plan.annualTotal}</span>
+              <span style={{ fontSize: 14, color: '#9e998f' }}>/year</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#9e998f', margin: '0 0 4px' }}>
+              equiv. {plan.priceAnnual}/mo
+              <span style={{ color: '#9e998f', margin: '0 0 0 4px', textDecoration: 'line-through' }}>(was {plan.price}/mo)</span>
+            </p>
+            {plan.annualSaving && (
+              <p style={{ fontSize: 12, color: plan.color, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ background: plan.color + '20', borderRadius: 20, padding: '1px 8px' }}>🎉 {plan.annualSaving}</span>
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 500, color: '#1a1917' }}>{plan.price}</span>
+              <span style={{ fontSize: 14, color: '#9e998f' }}>{plan.period}</span>
+            </div>
+            {plan.annual && (
+              <p style={{ fontSize: 12, color: plan.color, fontWeight: 600, margin: 0 }}>or {plan.annual}</p>
+            )}
+          </>
         )}
       </div>
 
@@ -239,7 +280,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       </ul>
 
       <Link
-        href={plan.ctaHref}
+        href={`${plan.ctaHref}${showAnnual ? '&billing=annual' : ''}`}
         style={{
           display: 'block', textAlign: 'center', padding: '12px 16px',
           borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: 'none',
@@ -258,6 +299,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
 export default function PricingPage() {
   const [activeTab, setActiveTab] = useState<'buyer' | 'owner'>('buyer')
+  const [billing,   setBilling]   = useState<'monthly' | 'annual'>('monthly')
 
   const tabBtn = (role: 'buyer' | 'owner', label: string, emoji: string, sub: string) => {
     const active = activeTab === role
@@ -353,11 +395,46 @@ export default function PricingPage() {
         )}
       </div>
 
+      {/* Billing toggle */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+        <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid #e2ddd6', borderRadius: 12, padding: 4, gap: 2 }}>
+          <button
+            onClick={() => setBilling('monthly')}
+            style={{
+              padding: '8px 22px', fontSize: 13, fontWeight: 600, borderRadius: 9, border: 'none', cursor: 'pointer',
+              background: billing === 'monthly' ? '#1D9E75' : 'transparent',
+              color: billing === 'monthly' ? '#fff' : '#5e5a52',
+              fontFamily: 'var(--font-body)', transition: 'all 0.15s',
+            }}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBilling('annual')}
+            style={{
+              padding: '8px 22px', fontSize: 13, fontWeight: 600, borderRadius: 9, border: 'none', cursor: 'pointer',
+              background: billing === 'annual' ? '#1D9E75' : 'transparent',
+              color: billing === 'annual' ? '#fff' : '#5e5a52',
+              fontFamily: 'var(--font-body)', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: 7,
+            }}
+          >
+            Annual
+            <span style={{
+              fontSize: 10, fontWeight: 700, background: billing === 'annual' ? 'rgba(255,255,255,0.2)' : '#dcfce7',
+              color: billing === 'annual' ? '#fff' : '#14532d', borderRadius: 20, padding: '1px 7px', whiteSpace: 'nowrap',
+            }}>
+              Save up to 33%
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Plan cards */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 clamp(16px,4vw,40px) 64px' }}>
         <div className="pp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {(activeTab === 'buyer' ? BUYER_PLANS : OWNER_PLANS).map(plan => (
-            <PlanCard key={plan.name} plan={plan} />
+            <PlanCard key={plan.name} plan={plan} billing={billing} />
           ))}
         </div>
         <p style={{ textAlign: 'center', fontSize: 12, color: '#9e998f', marginTop: 20 }}>

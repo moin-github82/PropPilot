@@ -54,6 +54,34 @@ const PREMIUM_SERVICES = [
   { icon: '⚡', title: 'EICR Electrical Report',        cost: 'from £150',  desc: 'Full electrical installation condition report' },
 ]
 
+const OWNER_PREVIEW_FEATURES = [
+  {
+    icon: '📊',
+    title: 'Property Dashboard',
+    desc: 'Live value estimates, equity tracking, and a full financial overview of your home.',
+  },
+  {
+    icon: '🔧',
+    title: 'Maintenance Calendar',
+    desc: 'Pre-scheduled reminders for boiler services, gutter cleans, and seasonal checks — before things break.',
+  },
+  {
+    icon: '⚡',
+    title: 'EPC Upgrade Planner',
+    desc: 'Personalised roadmap to Band C with grant eligibility checks and upgrade cost estimates.',
+  },
+  {
+    icon: '🏦',
+    title: 'Mortgage Radar',
+    desc: 'Automatic alerts when your fixed rate is about to expire — with remortgage rate comparisons.',
+  },
+  {
+    icon: '📁',
+    title: 'Document Vault',
+    desc: 'Secure cloud storage for your EPC, survey, gas certs, planning docs, and warranties.',
+  },
+]
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BuyerDashboard() {
@@ -218,6 +246,61 @@ export default function BuyerDashboard() {
               Enterprise plan: volume discounts available. Contact your account manager for custom pricing.
             </p>
           )}
+        </div>
+
+        {/* HomeOwner preview — coming soon section */}
+        <div style={{ marginTop: 36 }}>
+          <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #e0f7ed 100%)', border: '1px solid #86efac', borderRadius: 16, padding: '22px 24px 20px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1D9E75', margin: '0 0 4px' }}>Coming soon for you 🏠</p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, color: '#14532d', margin: '0 0 4px' }}>Your HomeOwner plan unlocks after completion</p>
+                <p style={{ fontSize: 13, color: '#166534', margin: 0, lineHeight: 1.6 }}>
+                  Once you get the keys, switch seamlessly to PropHealth HomeOwner Pro — your property intelligence hub for the long haul.
+                </p>
+              </div>
+              <Link href="/pricing?role=owner" style={{
+                fontSize: 13, fontWeight: 600, background: '#1D9E75', color: '#fff',
+                borderRadius: 9, padding: '9px 16px', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+              }}>
+                Preview HomeOwner Pro →
+              </Link>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+            {OWNER_PREVIEW_FEATURES.map(feat => (
+              <div key={feat.title} style={{
+                background: '#fff', border: '1px solid #e2ddd6', borderRadius: 12,
+                padding: '16px 18px', position: 'relative', overflow: 'hidden',
+              }}>
+                {/* Lock overlay */}
+                <div style={{
+                  position: 'absolute', top: 10, right: 12,
+                  background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 20,
+                  padding: '1px 8px', fontSize: 10, fontWeight: 600, color: '#15803d',
+                }}>
+                  After completion
+                </div>
+                <p style={{ fontSize: 22, margin: '0 0 8px' }}>{feat.icon}</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 4px' }}>{feat.title}</p>
+                <p style={{ fontSize: 12, color: '#5e5a52', margin: 0, lineHeight: 1.5 }}>{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 12, padding: '14px 18px', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#1a1917', margin: '0 0 2px' }}>Lock in HomeOwner Pro at £75/yr — save 31%</p>
+              <p style={{ fontSize: 12, color: '#5e5a52', margin: 0 }}>Annual HomeBuyer subscribers get their first month of HomeOwner Pro free after completing.</p>
+            </div>
+            <Link href="/pricing?role=owner&billing=annual" style={{
+              fontSize: 13, fontWeight: 600, color: '#1D9E75', border: '1.5px solid #1D9E75',
+              borderRadius: 8, padding: '7px 14px', textDecoration: 'none', whiteSpace: 'nowrap',
+            }}>
+              See annual plan →
+            </Link>
+          </div>
         </div>
 
         {/* Account info */}

@@ -54,6 +54,7 @@ const STANDARD: Checklist = {
         { id: 'stamp-duty',      text: 'Stamp duty calculated (inc. any surcharges)',              tip: 'First-time buyer relief applies up to £500k. 3% surcharge for second homes.' },
         { id: 'council-tax',     text: 'Council tax band verified via VOA',                       tip: 'Can add £1,200–£4,000+/yr. Check neighbours\' bands — yours may be wrong.' },
         { id: 'insurance',       text: 'Buildings insurance cost estimated (inc. flood risk)',    tip: 'Get quotes before exchange — flood risk can make insurance unaffordable.' },
+        { id: 'offer-accepted',  text: '🎉 Offer accepted by seller!',                            tip: 'Congratulations! Now instruct your solicitor and book your survey immediately. The clock is ticking — average time from offer to exchange is 10–12 weeks.' },
       ],
     },
     {
@@ -155,6 +156,7 @@ const FTB: Checklist = {
         { id: 'ftb-affordability', text: 'Monthly repayments stress-tested at higher rates',       tip: 'Calculate at 7–8% interest. Can you still afford it? Have a buffer.' },
         { id: 'ftb-sdlt',          text: 'Stamp duty costs understood and budgeted',               tip: 'First-time buyers pay 0% on first £425k, 5% on £425k–£625k. Use our calculator.' },
         { id: 'ftb-mortgage-type', text: 'Fixed vs variable mortgage options compared',            tip: 'Fixed = certainty. Variable = lower initial rate but uncertainty. Most FTBs choose 2–5yr fixed.' },
+        { id: 'ftb-offer-accepted',text: '🎉 Offer accepted by seller!',                          tip: 'Congratulations! Now instruct your solicitor and book your survey immediately.' },
       ],
     },
     {
@@ -316,16 +318,19 @@ const STORAGE_KEYS = {
 
 type TabId = 'standard' | 'ftb' | 'btl' | 'score'
 
+const OFFER_ACCEPTED_IDS = new Set(['offer-accepted', 'ftb-offer-accepted'])
+
 export default function ChecklistPage() {
-  const [tab,      setTab]      = useState<TabId>('standard')
-  const [checked,  setChecked]  = useState<Record<string, Record<string, boolean>>>({
+  const [tab,               setTab]               = useState<TabId>('standard')
+  const [checked,           setChecked]           = useState<Record<string, Record<string, boolean>>>({
     standard: {}, ftb: {}, btl: {},
   })
-  const [scores,   setScores]   = useState<Record<string, number>>(
+  const [scores,            setScores]            = useState<Record<string, number>>(
     () => Object.fromEntries(SCORE_CATEGORIES.map(c => [c.id, 3]))
   )
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [tips,     setTips]     = useState<string | null>(null)
+  const [expanded,          setExpanded]          = useState<Record<string, boolean>>({})
+  const [tips,              setTips]              = useState<string | null>(null)
+  const [showTransModal,    setShowTransModal]    = useState(false)
 
   // Load from localStorage
   useEffect(() => {
@@ -344,8 +349,13 @@ export default function ChecklistPage() {
 
   const toggle = (listId: string, itemId: string) => {
     setChecked(prev => {
-      const next = { ...prev, [listId]: { ...prev[listId], [itemId]: !prev[listId]?.[itemId] } }
+      const wasChecked = !!prev[listId]?.[itemId]
+      const next = { ...prev, [listId]: { ...prev[listId], [itemId]: !wasChecked } }
       try { localStorage.setItem(STORAGE_KEYS[listId as keyof typeof STORAGE_KEYS], JSON.stringify(next[listId])) } catch {}
+      // Trigger transition modal when "offer accepted" is checked (not unchecked)
+      if (!wasChecked && OFFER_ACCEPTED_IDS.has(itemId)) {
+        setShowTransModal(true)
+      }
       return next
     })
   }
@@ -697,6 +707,119 @@ export default function ChecklistPage() {
         </div>
       </main>
       <Footer />
+
+      {/* ── HomeBuyer → HomeOwner Transition Modal ── */}
+      {showTransModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(26,25,23,0.55)', backdropFilter: 'blur(3px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setShowTransModal(false) }}
+        >
+          <div style={{
+            background: '#fff', borderRadius: 20, padding: '32px 28px 28px',
+            maxWidth: 500, width: '100%', position: 'relative',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+          }}>
+            {/* Close button */}
+            <button
+              onClick={() => setShowTransModal(false)}
+              style={{
+                position: 'absolute', top: 16, right: 16,
+                width: 28, height: 28, borderRadius: '50%', border: 'none',
+                background: '#f0ede8', color: '#5e5a52', cursor: 'pointer',
+                fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'var(--font-body)',
+              }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            {/* Celebration header */}
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 48, marginBottom: 10 }}>🎉</div>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: '#1a1917', margin: '0 0 8px' }}>
+                Congratulations — offer accepted!
+              </p>
+              <p style={{ fontSize: 14, color: '#5e5a52', margin: 0, lineHeight: 1.6 }}>
+                You&apos;re one big step closer to owning your home. Once you get the keys, your property journey doesn&apos;t end — it transforms.
+              </p>
+            </div>
+
+            {/* Transition nudge */}
+            <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', border: '1px solid #86efac', borderRadius: 14, padding: '18px 20px', marginBottom: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#14532d', margin: '0 0 6px' }}>
+                🏠 Your HomeOwner plan is waiting
+              </p>
+              <p style={{ fontSize: 13, color: '#166534', margin: '0 0 14px', lineHeight: 1.6 }}>
+                After completion, switch seamlessly to PropHealth HomeOwner Pro — property dashboard, maintenance calendar, EPC planner, mortgage radar, and document vault — all in one place.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, background: '#fff', border: '1px solid #86efac', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 11, color: '#9e998f', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Monthly</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: '#1a1917', margin: '0 0 1px' }}>£9</p>
+                  <p style={{ fontSize: 11, color: '#9e998f', margin: 0 }}>per month</p>
+                </div>
+                <div style={{ flex: 1, background: '#1D9E75', border: '1px solid #1D9E75', borderRadius: 10, padding: '12px 14px', textAlign: 'center', position: 'relative' }}>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Annual — Best value</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: '#fff', margin: '0 0 1px' }}>£75</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>per year — save 31%</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Annual HomeBuyer lock-in offer */}
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#7c2d12', margin: '0 0 3px' }}>
+                🔒 Lock in HomeBuyer Pro at £159/yr now
+              </p>
+              <p style={{ fontSize: 12, color: '#9a3412', margin: 0, lineHeight: 1.5 }}>
+                Annual HomeBuyer subscribers get their first month of HomeOwner Pro <strong>free</strong> after completion. That&apos;s £9 off your first month — automatically.
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Link
+                href="/pricing?role=owner&billing=annual"
+                onClick={() => setShowTransModal(false)}
+                style={{
+                  display: 'block', textAlign: 'center', padding: '13px 16px',
+                  background: '#1D9E75', color: '#fff', borderRadius: 10, fontSize: 14,
+                  fontWeight: 600, textDecoration: 'none',
+                }}
+              >
+                Preview HomeOwner Pro plans →
+              </Link>
+              <Link
+                href="/pricing?role=buyer&billing=annual"
+                onClick={() => setShowTransModal(false)}
+                style={{
+                  display: 'block', textAlign: 'center', padding: '11px 16px',
+                  background: '#fff', color: '#1D9E75', border: '1.5px solid #1D9E75',
+                  borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                }}
+              >
+                Lock in HomeBuyer Pro annual (£159/yr) →
+              </Link>
+              <button
+                onClick={() => setShowTransModal(false)}
+                style={{
+                  padding: '10px 16px', background: 'none', border: 'none',
+                  fontSize: 13, color: '#9e998f', cursor: 'pointer',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                Continue my buying checklist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
