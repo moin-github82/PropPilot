@@ -103,9 +103,34 @@ function extractBuildingIdentifier(
 // ─── Per-property band lookup (Homedata API → VOA data) ──────────────────────
 
 /**
- * Look up the actual VOA council tax band for a specific property.
- * Requires HOMEDATA_API_KEY to be set.
- * Returns null gracefully on any error or missing key.
+ * Look up the actual VOA council tax band by UPRN (fastest path — cached VOA data).
+ * Preferred over address-based lookup when a UPRN is available.
+ */
+export async function getCouncilTaxBandByUprn(uprn: number): Promise<string | null> {
+  const apiKey = process.env.HOMEDATA_API_KEY
+  if (!apiKey || apiKey === 'your_homedata_api_key_here') return null
+
+  try {
+    const response = await axios.get(
+      'https://api.homedata.co.uk/api/council_tax_band/',
+      {
+        params:  { uprn },
+        headers: { Authorization: `Api-Key ${apiKey}` },
+        timeout: 8000,
+      }
+    )
+    const band = response.data?.council_tax_band
+    if (typeof band === 'string' && /^[A-H]$/.test(band)) return band
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Look up the actual VOA council tax band by postcode + building identifier.
+ * Falls back to a live VOA scrape if not cached. Use getCouncilTaxBandByUprn
+ * instead when a UPRN is available.
  */
 export async function getActualCouncilTaxBand(
   postcode: string,
@@ -133,7 +158,6 @@ export async function getActualCouncilTaxBand(
         timeout: 8000,
       }
     )
-
     const band = response.data?.council_tax_band
     if (typeof band === 'string' && /^[A-H]$/.test(band)) return band
     return null

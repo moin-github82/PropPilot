@@ -118,15 +118,39 @@ function broadbandRating(mbps: number): { label: string; color: string } {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PropertyReportPage() {
-  const [address,    setAddress]    = useState('')
-  const [postcode,   setPostcode]   = useState('')
-  const [report,     setReport]     = useState<ReportData | null>(null)
-  const [checkState, setCheckState] = useState<CheckState>({ flood: 'idle', epc: 'idle', crime: 'idle', broadband: 'idle', councilTax: 'idle' })
-  const [running,    setRunning]    = useState(false)
+  const [address,        setAddress]        = useState('')
+  const [postcode,       setPostcode]       = useState('')
+  const [report,         setReport]         = useState<ReportData | null>(null)
+  const [checkState,     setCheckState]     = useState<CheckState>({ flood: 'idle', epc: 'idle', crime: 'idle', broadband: 'idle', councilTax: 'idle' })
+  const [running,        setRunning]        = useState(false)
+  // Address picker
+  const [addressOptions, setAddressOptions] = useState<{ uprn: number; address: string }[]>([])
+  const [selectedUprn,   setSelectedUprn]   = useState<number | null>(null)
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [addressLookupDone, setAddressLookupDone] = useState(false)
   const reportRef = useRef<HTMLDivElement>(null)
 
   const setCheck = (key: keyof CheckState, status: CheckStatus) =>
     setCheckState(prev => ({ ...prev, [key]: status }))
+
+  const fetchAddresses = async (pc: string) => {
+    const clean = pc.trim().replace(/\s+/g, '').toUpperCase()
+    if (clean.length < 5) return
+    setLoadingAddresses(true)
+    setAddressLookupDone(false)
+    setAddressOptions([])
+    setSelectedUprn(null)
+    setAddress('')
+    try {
+      const res = await fetch(`/api/address-lookup/${encodeURIComponent(clean)}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) setAddressOptions(data)
+      }
+    } catch { /* graceful — user can still run report */ }
+    setLoadingAddresses(false)
+    setAddressLookupDone(true)
+  }
 
   const runReport = async () => {
     const pc = postcode.trim().replace(/\s+/g, ' ').toUpperCase()
@@ -163,7 +187,7 @@ export default function PropertyReportPage() {
       fetchCheck<EpcResult>  ('epc',        `/api/epc/${encoded}${addrQ}`),
       fetchCheck<CrimeResult>('crime',      `/api/crime/${encoded}`),
       fetchCheck<BroadbandResult>('broadband',  `/api/broadband/${encoded}`),
-      fetchCheck<CouncilTaxResult>('councilTax', `/api/council-tax/${encoded}${addrQ}`),
+      fetchCheck<CouncilTaxResult>('councilTax', selectedUprn ? `/api/council-tax/${encoded}?uprn=${selectedUprn}` : `/api/council-tax/${encoded}${addrQ}`),
     ])
 
     // Broadband returns 503 with configured:false — treat as partial data
@@ -232,26 +256,79 @@ export default function PropertyReportPage() {
 
           {/* Input form */}
           <div style={{ ...card, border: '1px solid #1D9E75' }} className="no-print">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, marginBottom: 14 }}>
-              <div>
-                <label style={labelStyle}>Property address (optional — helps match EPC)</label>
-                <input
-                  value={address} onChange={e => setAddress(e.target.value)}
-                  placeholder="e.g. 14 High Street"
-                  style={inputStyle}
-                  onKeyDown={e => e.key === 'Enter' && runReport()}
-                />
-              </div>
+
+            {/* Row 1: Postcode + Find addresses */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Postcode *</label>
                 <input
-                  value={postcode} onChange={e => setPostcode(e.target.value)}
+                  value={postcode}
+                  onChange={e => {
+                    setPostcode(e.target.value)
+                    setAddressOptions([])
+                    setSelectedUprn(null)
+                    setAddress('')
+                    setAddressLookupDone(false)
+                  }}
                   placeholder="e.g. SW1A 1AA"
-                  style={{ ...inputStyle, width: 140 }}
-                  onKeyDown={e => e.key === 'Enter' && runReport()}
+                  style={inputStyle}
+                  onKeyDown={e => e.key === 'Enter' && fetchAddresses(postcode)}
                 />
               </div>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => fetchAddresses(postcode)}
+                  disabled={loadingAddresses || postcode.trim().length < 5}
+                  style={{
+                    height: 48, padding: '0 18px', fontSize: 14, fontWeight: 500,
+                    background: '#1a1917', color: '#fff', border: 'none', borderRadius: 10,
+                    cursor: loadingAddresses || postcode.trim().length < 5 ? 'default' : 'pointer',
+                    fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+                    opacity: postcode.trim().length < 5 ? 0.45 : 1,
+                    transition: 'opacity 0.2s',
+                  }}
+                >
+                  {loadingAddresses ? '⏳ Looking up…' : '🔍 Find addresses'}
+                </button>
+              </div>
             </div>
+
+            {/* Row 2: Address dropdown (shown after lookup) */}
+            {addressOptions.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <label style={labelStyle}>Select your address (improves EPC match &amp; gets exact council tax band)</label>
+                <select
+                  value={selectedUprn ?? ''}
+                  onChange={e => {
+                    const uprn = Number(e.target.value)
+                    const opt  = addressOptions.find(o => o.uprn === uprn)
+                    if (opt) { setSelectedUprn(opt.uprn); setAddress(opt.address) }
+                    else     { setSelectedUprn(null);      setAddress('')          }
+                  }}
+                  style={{ ...inputStyle, cursor: 'pointer', paddingRight: 32 }}
+                >
+                  <option value="">— Select an address —</option>
+                  {addressOptions.map(opt => (
+                    <option key={opt.uprn} value={opt.uprn}>{opt.address}</option>
+                  ))}
+                </select>
+                {selectedUprn && (
+                  <p style={{ fontSize: 11, color: '#1D9E75', margin: '6px 0 0', fontWeight: 500 }}>
+                    ✓ Address selected — council tax band will be looked up from VOA
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* No results message */}
+            {addressLookupDone && addressOptions.length === 0 && !loadingAddresses && (
+              <div style={{ marginBottom: 12, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '10px 14px' }}>
+                <p style={{ fontSize: 12, color: '#451a03', margin: 0 }}>
+                  No addresses found — the Homedata API key may not be configured. You can still run the full report; council tax will show regional estimates.
+                </p>
+              </div>
+            )}
+
             <button
               onClick={runReport}
               disabled={running || !postcode.trim()}

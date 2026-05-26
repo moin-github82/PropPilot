@@ -1,14 +1,18 @@
 /**
- * GET /api/council-tax/[postcode]?address=...
+ * GET /api/council-tax/[postcode]?uprn=...  (preferred — UPRN path)
+ * GET /api/council-tax/[postcode]?address=... (fallback — text parse)
  *
- * Returns council tax info for a postcode area.
- * If ?address is also supplied, attempts to resolve the actual VOA band
- * for that specific property via the Homedata API.
+ * Returns council tax info for the postcode area, plus the actual VOA band
+ * for the specific property if a UPRN or address is supplied.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { geocodePostcode } from '../../../lib/geocode'
-import { getCouncilTaxInfo, getActualCouncilTaxBand } from '../../../lib/councilTax'
+import {
+  getCouncilTaxInfo,
+  getCouncilTaxBandByUprn,
+  getActualCouncilTaxBand,
+} from '../../../lib/councilTax'
 
 export async function GET(
   req: NextRequest,
@@ -16,6 +20,7 @@ export async function GET(
 ) {
   const { postcode: raw } = await params
   const postcode = decodeURIComponent(raw)
+  const uprn     = req.nextUrl.searchParams.get('uprn')
   const address  = req.nextUrl.searchParams.get('address') ?? ''
 
   if (!postcode || postcode.length < 5) {
@@ -27,8 +32,12 @@ export async function GET(
     return NextResponse.json({ error: 'Could not geocode postcode' }, { status: 404 })
   }
 
-  // Attempt per-property band lookup in parallel with geocode (already done above)
-  const actualBand = address ? await getActualCouncilTaxBand(postcode, address) : null
+  // UPRN path is fastest (hits cached VOA data); address path falls back to live scrape
+  const actualBand = uprn
+    ? await getCouncilTaxBandByUprn(Number(uprn))
+    : address
+    ? await getActualCouncilTaxBand(postcode, address)
+    : null
 
   const info = getCouncilTaxInfo(geo, actualBand)
   return NextResponse.json(info)
