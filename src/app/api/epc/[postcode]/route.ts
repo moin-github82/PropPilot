@@ -58,9 +58,14 @@ export async function GET(
   }
 
   try {
-    // Fetch all certificates for this postcode (cached 7 days)
+    // Fetch all certificates for this postcode (cached 7 days).
+    // Scotland uses a separate cache namespace so that stale E&W empty-result
+    // entries (from before the Scotland key was configured) are never served.
+    const cacheKey = isScotland
+      ? `SCO:${CacheKey.epcPostcode(postcode)}`
+      : CacheKey.epcPostcode(postcode)
     const records = await withCache(
-      CacheKey.epcPostcode(postcode),
+      cacheKey,
       TTL.EPC_POSTCODE,
       () => searchByPostcode(postcode)
     )
@@ -139,7 +144,9 @@ export async function GET(
       return NextResponse.json(
         {
           error: 'EPC API authentication failed',
-          hint: 'Check EPC_API_EMAIL and EPC_API_KEY in .env.local. Make sure there are no spaces around the values.',
+          hint: isScotland
+            ? 'Check EPC_SCOTLAND_API_KEY in .env.local. Re-copy the full key from your epcdata.scot dashboard.'
+            : 'Check EPC_API_EMAIL and EPC_API_KEY in .env.local. Make sure there are no spaces around the values.',
         },
         { status: 401 }
       )

@@ -144,19 +144,19 @@ export async function searchByPostcodeScotland(
   postcode: string
 ): Promise<EPCCertificate[] | null> {
   const auth = getScotlandAuthHeader()
-  if (!auth) return null                     // key not configured
+  if (!auth) return null                     // key not configured — signal caller to fall through
 
   const clean = postcode.replace(/\s/g, '').toUpperCase()
-  try {
-    const response = await axios.get(`${EPC_BASE_SCO}/domestic/search`, {
-      headers: { Authorization: auth, Accept: 'application/json' },
-      params: { postcode: clean, 'page-size': 10, from: 0 },
-      timeout: 10000,
-    })
-    return response.data?.rows ?? []
-  } catch {
-    return null
-  }
+  // No try/catch: auth and network errors propagate to the route handler so they
+  // surface as a proper error message instead of silently returning empty results.
+  const response = await axios.get(`${EPC_BASE_SCO}/domestic/search`, {
+    headers: { Authorization: auth, Accept: 'application/json' },
+    params: { postcode: clean, 'page-size': 10, from: 0 },
+    timeout: 10000,
+  })
+  const rows: EPCCertificate[] = response.data?.rows ?? []
+  console.log(`[EPC Scotland] postcode=${clean} rows=${rows.length} status=${response.status}`)
+  return rows
 }
 
 /**

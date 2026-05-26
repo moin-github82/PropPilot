@@ -57,12 +57,14 @@ interface BroadbandResult {
 }
 
 interface CouncilTaxResult {
-  localAuthority:  string
-  voaLookupUrl:    string
-  actualBand:      string | null
-  actualAnnualRate: number | null
-  avgBandDRate:    number | null
-  bandRates:       Record<string, number> | null
+  localAuthority:     string
+  voaLookupUrl:       string
+  challengeGuideUrl:  string
+  actualBand:         string | null
+  actualAnnualRate:   number | null
+  avgBandDRate:       number | null
+  bandRates:          Record<string, number> | null
+  appealDeadlineNote: string
 }
 
 interface ReportData {
@@ -88,6 +90,11 @@ interface CheckState {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Scottish postcode area codes (for client-side Scotland detection)
+const SCOTLAND_AREAS = new Set(['AB','DD','DG','EH','FK','G','HS','IV','KA','KW','KY','ML','PA','PH','TD','ZE'])
+const isScottishPc = (pc: string) =>
+  SCOTLAND_AREAS.has(pc.replace(/\s/g,'').toUpperCase().match(/^[A-Z]+/)?.[0] ?? '')
 
 const BAND_COLORS: Record<string, string> = {
   A: '#00b050', B: '#19b450', C: '#8dc63f',
@@ -307,7 +314,9 @@ export default function PropertyReportPage() {
             {/* Row 2: Address dropdown (shown after lookup) */}
             {addressOptions.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Select your address (improves EPC match &amp; gets exact council tax band)</label>
+                <label style={labelStyle}>
+                  Select your address (improves EPC match{isScottishPc(postcode) ? '' : ' & gets exact council tax band'})
+                </label>
                 <select
                   value={selectedUprn ?? ''}
                   onChange={e => {
@@ -325,7 +334,9 @@ export default function PropertyReportPage() {
                 </select>
                 {selectedUprn && (
                   <p style={{ fontSize: 11, color: '#1D9E75', margin: '6px 0 0', fontWeight: 500 }}>
-                    ✓ Address selected — council tax band will be looked up from VOA
+                    {isScottishPc(postcode)
+                      ? '✓ Address selected — improves EPC matching accuracy'
+                      : '✓ Address selected — council tax band will be looked up from VOA'}
                   </p>
                 )}
               </div>
@@ -695,7 +706,9 @@ export default function PropertyReportPage() {
                         <p style={{ fontSize: 13, color: '#5e5a52', margin: '0 0 4px' }}>Average Band D rate: ~£{report.councilTax.avgBandDRate.toLocaleString()}/year in this region</p>
                       )}
                       <p style={{ fontSize: 12, color: '#9e998f', margin: 0 }}>
-                        Band not resolved — enter a full address to get the exact band for this property.
+                        {report.councilTax!.voaLookupUrl.includes('saa.gov.uk')
+                          ? 'Scotland: band data is held by the SAA — use the link below to look up this property.'
+                          : 'Band not resolved — enter a full address to get the exact band for this property.'}
                       </p>
                     </div>
                   )}
@@ -704,7 +717,11 @@ export default function PropertyReportPage() {
                   {report.councilTax.bandRates && (
                     <>
                       <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9e998f', margin: '0 0 10px' }}>
-                        {report.councilTax.actualBand ? 'All band rates — 2026-27 regional average' : 'Estimated band rates — 2026-27 regional average'}
+                        {report.councilTax.actualBand
+                          ? 'All band rates — 2026-27 regional average'
+                          : report.councilTax.voaLookupUrl.includes('saa.gov.uk')
+                          ? 'Estimated band rates — 2025/26 council average'
+                          : 'Estimated band rates — 2026-27 regional average'}
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 14 }}>
                         {Object.entries(report.councilTax.bandRates).slice(0, 8).map(([band, rate]) => {
@@ -728,16 +745,25 @@ export default function PropertyReportPage() {
                   <p style={{ fontSize: 12, color: '#9e998f', margin: '0 0 10px', lineHeight: 1.5 }}>
                     {report.councilTax.actualBand
                       ? `Band ${report.councilTax.actualBand} confirmed from VOA data via Homedata. Annual cost uses 2026-27 regional average Band D — exact council rate may differ slightly.`
+                      : report.councilTax.voaLookupUrl.includes('saa.gov.uk')
+                      ? 'Rates shown are estimates based on 2025/26 council Band D averages. The exact band for this property is held by the SAA — use the link below to look it up.'
                       : 'Band rates are estimates based on 2026-27 regional averages (MHCLG). Rates vary between individual councils — check the exact band and annual amount for this specific address using the VOA link below.'}
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <a href={report.councilTax.voaLookupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
-                      → Check / challenge band on VOA ↗
+                      {report.councilTax.voaLookupUrl.includes('saa.gov.uk')
+                        ? '→ Look up band on SAA ↗'
+                        : '→ Check / challenge band on VOA ↗'}
                     </a>
-                    <a href="https://www.gov.uk/challenge-council-tax-band" target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
+                    <a href={report.councilTax.challengeGuideUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
                       → How to challenge your band ↗
                     </a>
                   </div>
+                  {report.councilTax.appealDeadlineNote && (
+                    <p style={{ fontSize: 11, color: '#9e998f', margin: '0 0 10px', lineHeight: 1.5 }}>
+                      {report.councilTax.appealDeadlineNote}
+                    </p>
+                  )}
                   <ChecklistItems items={[
                     { text: 'Confirm council tax band and annual amount', done: !!report.councilTax.actualBand },
                   ]} />
