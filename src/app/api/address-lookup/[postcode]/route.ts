@@ -35,12 +35,28 @@ export async function GET(
       }
     )
 
-    const results: { uprn: number; address: string }[] =
-      (response.data?.results ?? []).map((r: { uprn: number; address: string }) => ({
-        uprn:    r.uprn,
-        address: r.address,
-      }))
+    // Log raw shape so we can see it in the Next.js terminal
+    console.log('[address-lookup] raw response keys:', Object.keys(response.data ?? {}))
+    console.log('[address-lookup] raw response (first 500 chars):', JSON.stringify(response.data).slice(0, 500))
 
+    // Homedata may return { results: [...] } or a flat array or { addresses: [...] }
+    const raw: unknown = response.data
+    let items: { uprn: number; address: string }[] = []
+    if (Array.isArray(raw)) {
+      items = raw
+    } else if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>
+      // try common keys
+      const list = obj['results'] ?? obj['addresses'] ?? obj['data'] ?? []
+      items = Array.isArray(list) ? list as { uprn: number; address: string }[] : []
+    }
+
+    const results = items.map((r: { uprn: number; address: string }) => ({
+      uprn:    r.uprn,
+      address: r.address,
+    }))
+
+    console.log('[address-lookup] returning', results.length, 'addresses')
     return NextResponse.json(results)
   } catch (err) {
     if (axios.isAxiosError(err)) {
