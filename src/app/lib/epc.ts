@@ -151,8 +151,9 @@ export async function getCertificateByLmkKey(lmkKey: string): Promise<EPCCertifi
 
 /**
  * Normalise an address string for fuzzy comparison.
+ * @internal exported for testing
  */
-function normaliseAddress(s: string): string {
+export function normaliseAddress(s: string): string {
   return s
     .toLowerCase()
     .replace(/[^a-z0-9 ]/g, ' ')
@@ -163,8 +164,9 @@ function normaliseAddress(s: string): string {
 /**
  * Compute simple Dice coefficient similarity between two strings.
  * Returns 0–1. No external dependency required.
+ * @internal exported for testing
  */
-function diceSimilarity(a: string, b: string): number {
+export function diceSimilarity(a: string, b: string): number {
   if (a === b) return 1
   if (a.length < 2 || b.length < 2) return 0
   const bigrams = (s: string): Map<string, number> => {
@@ -359,6 +361,11 @@ export async function getPropertyEPC(
     certificate,
     matchConfidence,
     upgradeRecommendations: getUpgradeRecommendations(certificate),
+    isStaleCertificate: yearsOld > 10,
+    yearsOld,
+  }
+}
+ndations(certificate),
     isStaleCertificate: yearsOld > 10,
     yearsOld,
   }

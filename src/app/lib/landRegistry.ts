@@ -62,11 +62,13 @@ export const TENURE_MAP: Record<string, string> = {
   F: 'Freehold', L: 'Leasehold',
 }
 
-function normalisePostcode(p: string): string {
+/** @internal exported for testing */
+export function normalisePostcode(p: string): string {
   return p.replace(/\s/g, '').toUpperCase()
 }
 
-function formatPostcodeForQuery(p: string): string {
+/** @internal exported for testing */
+export function formatPostcodeForQuery(p: string): string {
   const clean = normalisePostcode(p)
   return `${clean.slice(0, -3)} ${clean.slice(-3)}`
 }
@@ -239,15 +241,25 @@ export async function getHPIByRegion(regionCode: string): Promise<HPIData | null
 
 // ─── Postcode → HPI region ────────────────────────────────────────────────────
 
-function postcodeToHPIRegion(postcode: string): string {
-  const d = normalisePostcode(postcode).slice(0, 2).toUpperCase()
-  const london = ['EC','WC','E','N','NW','SE','SW','W','BR','CR','DA','EN','HA','IG','KT','RM','SM','TW','UB','WD']
-  if (london.some(p => d.startsWith(p))) return 'E12000007'
-  if (['M','SK','OL','BL','WN','WA'].some(p => d.startsWith(p))) return 'E12000002'
-  if (['LS','BD','HX','HD','WF','HG','YO','DN'].some(p => d.startsWith(p))) return 'E12000003'
-  if (['B','CV','WV','WS','DY','ST'].some(p => d.startsWith(p))) return 'E12000005'
-  if (['BS','BA','GL','SN','SP','RG','OX'].some(p => d.startsWith(p))) return 'E12000009'
-  if (['BN','TN','ME','CT','PO','SO','GU'].some(p => d.startsWith(p))) return 'E12000008'
+/** @internal exported for testing */
+export function postcodeToHPIRegion(postcode: string): string {
+  // Extract the alphabetic area code from the outward code (e.g. 'SW' from 'SW1A2AA')
+  const area = normalisePostcode(postcode).match(/^[A-Z]+/)?.[0] ?? ''
+
+  // Use exact Set membership — avoids false matches like W matching WN, WF, WV, WS
+  const LONDON            = new Set(['EC','WC','E','N','NW','SE','SW','W','BR','CR','DA','EN','HA','IG','KT','RM','SM','TW','UB','WD'])
+  const GREATER_MANCHESTER = new Set(['M','SK','OL','BL','WN','WA'])
+  const YORKSHIRE          = new Set(['LS','BD','HX','HD','WF','HG','YO','DN'])
+  const WEST_MIDLANDS      = new Set(['B','CV','WV','WS','DY','ST'])
+  const SOUTH_WEST         = new Set(['BS','BA','GL','SN','SP','RG','OX'])
+  const SOUTH_EAST         = new Set(['BN','TN','ME','CT','PO','SO','GU'])
+
+  if (LONDON.has(area))             return 'E12000007'
+  if (GREATER_MANCHESTER.has(area)) return 'E12000002'
+  if (YORKSHIRE.has(area))          return 'E12000003'
+  if (WEST_MIDLANDS.has(area))      return 'E12000005'
+  if (SOUTH_WEST.has(area))         return 'E12000009'
+  if (SOUTH_EAST.has(area))         return 'E12000008'
   return 'E92000001'
 }
 

@@ -33,7 +33,8 @@ export interface MaintenanceReport {
 
 // ─── Property era classification ─────────────────────────────────────────────
 
-function getPropertyEra(constructionYear: number): string {
+/** @internal exported for testing */
+export function getPropertyEra(constructionYear: number): string {
   if (constructionYear < 1900)  return 'Victorian / Edwardian (pre-1900)'
   if (constructionYear < 1930)  return 'Inter-war (1900–1930)'
   if (constructionYear < 1945)  return 'Late inter-war (1930–1945)'
@@ -47,7 +48,8 @@ function getPropertyEra(constructionYear: number): string {
 
 // ─── Cost range parser ────────────────────────────────────────────────────────
 
-function parseCostRange(range: string): [number, number] {
+/** @internal exported for testing */
+export function parseCostRange(range: string): [number, number] {
   const matches = range.match(/£([\d,]+)/g)
   if (!matches || matches.length < 2) return [0, 0]
   const parse = (s: string) => parseInt(s.replace(/[£,]/g, ''), 10)
@@ -265,6 +267,11 @@ export function generateMaintenanceReport(
     predictions,
     totalEstimatedLow: totalLow,
     totalEstimatedHigh: totalHigh,
+    propertyEra: getPropertyEra(yearBuilt),
+    summary,
+  }
+}
+lEstimatedHigh: totalHigh,
     propertyEra: getPropertyEra(yearBuilt),
     summary,
   }

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "npx tsx --test src/__tests__/*.test.ts",
+    "test:watch": "npx tsx --test --watch src/__tests__/*.test.ts"
   },
   "dependencies": {
     "next": "^15.3.1",
