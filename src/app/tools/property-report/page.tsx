@@ -126,8 +126,9 @@ export default function PropertyReportPage() {
   // Address picker
   const [addressOptions, setAddressOptions] = useState<{ uprn: number; address: string }[]>([])
   const [selectedUprn,   setSelectedUprn]   = useState<number | null>(null)
-  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [loadingAddresses,  setLoadingAddresses]  = useState(false)
   const [addressLookupDone, setAddressLookupDone] = useState(false)
+  const [addressLookupError, setAddressLookupError] = useState('')
   const reportRef = useRef<HTMLDivElement>(null)
 
   const setCheck = (key: keyof CheckState, status: CheckStatus) =>
@@ -141,13 +142,23 @@ export default function PropertyReportPage() {
     setAddressOptions([])
     setSelectedUprn(null)
     setAddress('')
+    setAddressLookupError('')
     try {
       const res = await fetch(`/api/address-lookup/${encodeURIComponent(clean)}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data)) setAddressOptions(data)
+      const data = await res.json()
+      if (res.ok && Array.isArray(data)) {
+        if (data.length > 0) {
+          setAddressOptions(data)
+        } else {
+          setAddressLookupError('No addresses found for this postcode.')
+        }
+      } else {
+        const msg = data?.error ?? `HTTP ${res.status}`
+        setAddressLookupError(msg)
       }
-    } catch { /* graceful — user can still run report */ }
+    } catch (e) {
+      setAddressLookupError(e instanceof Error ? e.message : 'Network error')
+    }
     setLoadingAddresses(false)
     setAddressLookupDone(true)
   }
@@ -320,11 +331,18 @@ export default function PropertyReportPage() {
               </div>
             )}
 
-            {/* No results message */}
-            {addressLookupDone && addressOptions.length === 0 && !loadingAddresses && (
-              <div style={{ marginBottom: 12, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '10px 14px' }}>
-                <p style={{ fontSize: 12, color: '#451a03', margin: 0 }}>
-                  No addresses found — the Homedata API key may not be configured. You can still run the full report; council tax will show regional estimates.
+            {/* Address lookup error / no results */}
+            {addressLookupDone && addressOptions.length === 0 && !loadingAddresses && addressLookupError && (
+              <div style={{ marginBottom: 12, background: '#fff1f2', border: '1px solid #fda4af', borderRadius: 8, padding: '10px 14px' }}>
+                <p style={{ fontSize: 12, fontWeight: 500, color: '#9f1239', margin: '0 0 4px' }}>Address lookup failed</p>
+                <p style={{ fontSize: 12, color: '#9f1239', margin: '0 0 6px', fontFamily: 'monospace' }}>{addressLookupError}</p>
+                <p style={{ fontSize: 11, color: '#9f1239', margin: 0 }}>
+                  {addressLookupError.toLowerCase().includes('not configured') || addressLookupError.includes('503')
+                    ? <>Set <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>HOMEDATA_API_KEY</code> in <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>.env.local</code> — free key at <a href="https://homedata.co.uk/register" target="_blank" rel="noreferrer" style={{color:'#9f1239'}}>homedata.co.uk/register</a></>
+                    : addressLookupError.includes('401') || addressLookupError.toLowerCase().includes('unauthori')
+                    ? <>API key is invalid — check <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>HOMEDATA_API_KEY</code> in <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>.env.local</code></>
+                    : 'You can still run the report — council tax will show regional estimates.'
+                  }
                 </p>
               </div>
             )}

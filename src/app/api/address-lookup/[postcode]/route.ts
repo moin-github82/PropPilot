@@ -43,7 +43,16 @@ export async function GET(
 
     return NextResponse.json(results)
   } catch (err) {
-    const status = axios.isAxiosError(err) ? (err.response?.status ?? 500) : 500
-    return NextResponse.json({ error: 'Address lookup failed' }, { status })
+    if (axios.isAxiosError(err)) {
+      const status = err.response?.status ?? 500
+      const detail = err.response?.data ?? err.message
+      console.error('[address-lookup] Homedata error', status, JSON.stringify(detail))
+      return NextResponse.json(
+        { error: `Homedata API error ${status}: ${JSON.stringify(detail)}` },
+        { status }
+      )
+    }
+    console.error('[address-lookup] Unexpected error', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
