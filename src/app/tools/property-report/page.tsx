@@ -59,6 +59,8 @@ interface BroadbandResult {
 interface CouncilTaxResult {
   localAuthority:  string
   voaLookupUrl:    string
+  actualBand:      string | null
+  actualAnnualRate: number | null
   avgBandDRate:    number | null
   bandRates:       Record<string, number> | null
 }
@@ -161,7 +163,7 @@ export default function PropertyReportPage() {
       fetchCheck<EpcResult>  ('epc',        `/api/epc/${encoded}${addrQ}`),
       fetchCheck<CrimeResult>('crime',      `/api/crime/${encoded}`),
       fetchCheck<BroadbandResult>('broadband',  `/api/broadband/${encoded}`),
-      fetchCheck<CouncilTaxResult>('councilTax', `/api/council-tax/${encoded}`),
+      fetchCheck<CouncilTaxResult>('councilTax', `/api/council-tax/${encoded}${addrQ}`),
     ])
 
     // Broadband returns 503 with configured:false — treat as partial data
@@ -344,7 +346,16 @@ export default function PropertyReportPage() {
                 {report.councilTax && (
                   <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 10, padding: '12px 14px' }}>
                     <p style={{ fontSize: 11, color: '#5e5a52', margin: '0 0 4px', fontWeight: 500 }}>🏛️ Council tax</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1917', margin: 0 }}>Band D ~£{report.councilTax.avgBandDRate?.toLocaleString() ?? '—'}/yr</p>
+                    {report.councilTax.actualBand ? (
+                      <>
+                        <p style={{ fontSize: 24, fontWeight: 700, color: '#1a1917', margin: '0 0 2px' }}>Band {report.councilTax.actualBand}</p>
+                        {report.councilTax.actualAnnualRate && (
+                          <p style={{ fontSize: 12, color: '#5e5a52', margin: 0 }}>~£{report.councilTax.actualAnnualRate.toLocaleString()}/yr</p>
+                        )}
+                      </>
+                    ) : (
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1917', margin: 0 }}>Band D ~£{report.councilTax.avgBandDRate?.toLocaleString() ?? '—'}/yr</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -557,38 +568,83 @@ export default function PropertyReportPage() {
                     <span style={{ fontSize: 24 }}>🏛️</span>
                     <h3 style={sectionHead}>Council Tax</h3>
                   </div>
-                  <div style={{ background: '#f8f7f4', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1917', margin: '0 0 4px' }}>{report.councilTax.localAuthority}</p>
-                    {report.councilTax.avgBandDRate && (
-                      <p style={{ fontSize: 13, color: '#5e5a52', margin: 0 }}>Average Band D rate: ~£{report.councilTax.avgBandDRate.toLocaleString()}/year in this region</p>
-                    )}
-                  </div>
+
+                  {/* Actual band — shown prominently when resolved */}
+                  {report.councilTax.actualBand ? (
+                    <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '16px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ width: 64, height: 64, borderRadius: 12, background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                          {report.councilTax.actualBand}
+                        </div>
+                        <p style={{ fontSize: 11, color: '#14532d', margin: 0 }}>VOA Band</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#14532d', margin: '0 0 4px' }}>
+                          ✓ Actual band confirmed for this property
+                        </p>
+                        <p style={{ fontSize: 13, color: '#14532d', margin: '0 0 4px' }}>
+                          {report.councilTax.localAuthority}
+                        </p>
+                        {report.councilTax.actualAnnualRate && (
+                          <p style={{ fontSize: 13, color: '#14532d', margin: 0 }}>
+                            Estimated annual charge: ~£{report.councilTax.actualAnnualRate.toLocaleString()}/yr
+                            <span style={{ fontSize: 11, color: '#166534', marginLeft: 6 }}>(based on regional Band D rate)</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: '#f8f7f4', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: '#1a1917', margin: '0 0 4px' }}>{report.councilTax.localAuthority}</p>
+                      {report.councilTax.avgBandDRate && (
+                        <p style={{ fontSize: 13, color: '#5e5a52', margin: '0 0 4px' }}>Average Band D rate: ~£{report.councilTax.avgBandDRate.toLocaleString()}/year in this region</p>
+                      )}
+                      <p style={{ fontSize: 12, color: '#9e998f', margin: 0 }}>
+                        Band not resolved — enter a full address to get the exact band for this property.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Band rate grid */}
                   {report.councilTax.bandRates && (
                     <>
-                      <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9e998f', margin: '0 0 10px' }}>Estimated band rates (regional average)</p>
+                      <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9e998f', margin: '0 0 10px' }}>
+                        {report.councilTax.actualBand ? 'All band rates — 2026-27 regional average' : 'Estimated band rates — 2026-27 regional average'}
+                      </p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 14 }}>
-                        {Object.entries(report.councilTax.bandRates).slice(0, 8).map(([band, rate]) => (
-                          <div key={band} style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 8, padding: '10px', textAlign: 'center' }}>
-                            <p style={{ fontSize: 16, fontWeight: 700, color: '#1a1917', margin: '0 0 2px' }}>Band {band}</p>
-                            <p style={{ fontSize: 12, color: '#5e5a52', margin: 0 }}>~£{Math.round(rate).toLocaleString()}/yr</p>
-                          </div>
-                        ))}
+                        {Object.entries(report.councilTax.bandRates).slice(0, 8).map(([band, rate]) => {
+                          const isActual = band === report.councilTax!.actualBand
+                          return (
+                            <div key={band} style={{
+                              background: isActual ? '#f0fdf4' : '#fff',
+                              border: isActual ? '2px solid #1D9E75' : '1px solid #e2ddd6',
+                              borderRadius: 8, padding: '10px', textAlign: 'center',
+                            }}>
+                              <p style={{ fontSize: 16, fontWeight: 700, color: isActual ? '#1D9E75' : '#1a1917', margin: '0 0 2px' }}>Band {band}</p>
+                              <p style={{ fontSize: 12, color: '#5e5a52', margin: 0 }}>~£{Math.round(rate).toLocaleString()}/yr</p>
+                              {isActual && <p style={{ fontSize: 10, color: '#1D9E75', margin: '3px 0 0', fontWeight: 600 }}>THIS PROPERTY</p>}
+                            </div>
+                          )
+                        })}
                       </div>
                     </>
                   )}
+
                   <p style={{ fontSize: 12, color: '#9e998f', margin: '0 0 10px', lineHeight: 1.5 }}>
-                    Band rates are estimates based on regional averages. Check the exact band and rate for this specific property using the VOA link below.
+                    {report.councilTax.actualBand
+                      ? `Band ${report.councilTax.actualBand} confirmed from VOA data via Homedata. Annual cost uses 2026-27 regional average Band D — exact council rate may differ slightly.`
+                      : 'Band rates are estimates based on 2026-27 regional averages (MHCLG). Rates vary between individual councils — check the exact band and annual amount for this specific address using the VOA link below.'}
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <a href={report.councilTax.voaLookupUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
-                      → Check exact band on VOA ↗
+                      → Check / challenge band on VOA ↗
                     </a>
                     <a href="https://www.gov.uk/challenge-council-tax-band" target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
                       → How to challenge your band ↗
                     </a>
                   </div>
                   <ChecklistItems items={[
-                    { text: 'Check council tax band and annual amount', done: true },
+                    { text: 'Confirm council tax band and annual amount', done: !!report.councilTax.actualBand },
                   ]} />
                 </div>
               )}
