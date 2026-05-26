@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   searchByPostcode,
+  isScottishPostcode,
   findBestAddressMatch,
   getUpgradeRecommendations,
   getCertificateAgeYears,
@@ -28,8 +29,25 @@ export async function GET(
     )
   }
 
-  // Check EPC API credentials are configured
-  if (!process.env.EPC_API_EMAIL || !process.env.EPC_API_KEY) {
+  // For Scottish postcodes, require the Scotland key
+  const isScotland = isScottishPostcode(postcode)
+  if (isScotland) {
+    const scotKey = process.env.EPC_SCOTLAND_API_KEY
+    if (!scotKey || scotKey === 'your_scotland_epc_api_key_here') {
+      return NextResponse.json(
+        {
+          found: false,
+          postcode,
+          message: 'Scottish EPC data requires a separate API key from epcdata.scot (free). Add EPC_SCOTLAND_API_KEY to your .env.local file.',
+          setupUrl: 'https://epcdata.scot/api-key',
+        },
+        { status: 200 }   // return 200 so the UI shows the message rather than an error
+      )
+    }
+  }
+
+  // Check E&W EPC API credentials (not needed for Scotland)
+  if (!isScotland && (!process.env.EPC_API_EMAIL || !process.env.EPC_API_KEY)) {
     return NextResponse.json(
       {
         error: 'EPC API not configured',
@@ -51,7 +69,9 @@ export async function GET(
       return NextResponse.json({
         found: false,
         postcode,
-        message: 'No EPC certificates found for this postcode. The property may not have been assessed since 2008.',
+        message: isScotland
+          ? 'No EPC certificates found in the Scottish register for this postcode. The property may not have been assessed, or the certificate may have expired.'
+          : 'No EPC certificates found for this postcode. The property may not have been assessed since 2008.',
       })
     }
 

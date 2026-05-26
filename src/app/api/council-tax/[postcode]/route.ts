@@ -1,9 +1,10 @@
 /**
- * GET /api/council-tax/[postcode]?uprn=...  (preferred — UPRN path)
- * GET /api/council-tax/[postcode]?address=... (fallback — text parse)
+ * GET /api/council-tax/[postcode]?uprn=...  (preferred -- UPRN path, E&W only)
+ * GET /api/council-tax/[postcode]?address=... (fallback -- text parse, E&W only)
  *
  * Returns council tax info for the postcode area, plus the actual VOA band
  * for the specific property if a UPRN or address is supplied.
+ * For Scottish postcodes, Homedata/VOA lookups are skipped (SAA only).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -32,8 +33,12 @@ export async function GET(
     return NextResponse.json({ error: 'Could not geocode postcode' }, { status: 404 })
   }
 
-  // UPRN path is fastest (hits cached VOA data); address path falls back to live scrape
-  const actualBand = uprn
+  // Homedata/VOA band lookup only covers England & Wales -- skip for Scotland
+  // (Scottish bands are held by SAA; no public programmatic API exists)
+  const isScotland = geo.country?.toLowerCase().includes('scotland') ?? false
+  const actualBand = isScotland
+    ? null
+    : uprn
     ? await getCouncilTaxBandByUprn(Number(uprn))
     : address
     ? await getActualCouncilTaxBand(postcode, address)

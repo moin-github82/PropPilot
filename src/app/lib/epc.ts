@@ -110,16 +110,70 @@ function getAuthHeader(): string {
   return `Basic ${credentials}`
 }
 
-const EPC_BASE = 'https://epc.opendatacommunities.org/api/v1'
+const EPC_BASE    = 'https://epc.opendatacommunities.org/api/v1'
+const EPC_BASE_SCO = 'https://api.epcdata.scot/ew-compatible/v1'
+
+// ─── Scottish postcode detection ─────────────────────────────────────────────
+
+// All postcode area codes that are exclusively in Scotland
+const SCOTLAND_AREAS = new Set([
+  'AB','DD','DG','EH','FK','G','HS','IV','KA','KW','KY','ML','PA','PH','TD','ZE',
+])
+
+/** Returns true if the postcode belongs to a Scottish local authority area. */
+export function isScottishPostcode(postcode: string): boolean {
+  const area = postcode.replace(/\s/g, '').toUpperCase().match(/^[A-Z]+/)?.[0] ?? ''
+  return SCOTLAND_AREAS.has(area)
+}
+
+function getScotlandAuthHeader(): string | null {
+  const apiKey = process.env.EPC_SCOTLAND_API_KEY
+  if (!apiKey || apiKey === 'your_scotland_epc_api_key_here') return null
+  // epcdata.scot uses Bearer token auth
+  return `Bearer ${apiKey}`
+}
 
 // ─── Raw API calls ────────────────────────────────────────────────────────────
 
 /**
+ * Search the Scotland EPC register (epcdata.scot) by postcode.
+ * Returns up to 10 most recent certificates in the /ew-compatible format.
+ * Returns null if EPC_SCOTLAND_API_KEY is not configured.
+ */
+export async function searchByPostcodeScotland(
+  postcode: string
+): Promise<EPCCertificate[] | null> {
+  const auth = getScotlandAuthHeader()
+  if (!auth) return null                     // key not configured
+
+  const clean = postcode.replace(/\s/g, '').toUpperCase()
+  try {
+    const response = await axios.get(`${EPC_BASE_SCO}/domestic/search`, {
+      headers: { Authorization: auth, Accept: 'application/json' },
+      params: { postcode: clean, 'page-size': 10, from: 0 },
+      timeout: 10000,
+    })
+    return response.data?.rows ?? []
+  } catch {
+    return null
+  }
+}
+
+/**
  * Search for EPC certificates by postcode.
+ * Automatically routes to the Scotland API for Scottish postcodes.
  * Returns up to 10 most recent certificates in that postcode.
  */
 export async function searchByPostcode(postcode: string): Promise<EPCCertificate[]> {
   const clean = postcode.replace(/\s/g, '').toUpperCase()
+
+  if (isScottishPostcode(clean)) {
+    const scotResult = await searchByPostcodeScotland(clean)
+    if (scotResult !== null) return scotResult
+    // Key not configured — fall through to E&W API which will return empty
+    // (the route handler will surface the right message)
+  }
+
   const response = await axios.get(`${EPC_BASE}/domestic/search`, {
     headers: {
       Authorization: getAuthHeader(),
