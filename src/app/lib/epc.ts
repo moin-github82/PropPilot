@@ -365,8 +365,3 @@ export async function getPropertyEPC(
     yearsOld,
   }
 }
-ndations(certificate),
-    isStaleCertificate: yearsOld > 10,
-    yearsOld,
-  }
-}

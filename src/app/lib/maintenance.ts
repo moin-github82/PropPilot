@@ -271,8 +271,3 @@ export function generateMaintenanceReport(
     summary,
   }
 }
-lEstimatedHigh: totalHigh,
-    propertyEra: getPropertyEra(yearBuilt),
-    summary,
-  }
-}
