@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ export default function MaintenancePage() {
   }
 
   return (
+    <RequireAuth requirePlan toolName="Maintenance Calendar">
     <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
@@ -219,9 +221,10 @@ export default function MaintenancePage() {
 
         <p style={{ fontSize: 11, color: '#9e998f', marginTop: 24, lineHeight: 1.6 }}>
           Tasks are saved in your browser. For reminders across devices, join the PropHealth waitlist.
-        </p>
+         </p>
       </main>
       <Footer />
     </div>
+  </RequireAuth>
   )
 }

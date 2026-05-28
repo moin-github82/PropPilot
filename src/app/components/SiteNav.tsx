@@ -14,6 +14,7 @@ const BUYER_LINKS = [
   { label: 'Checklists',       href: '/tools/checklist' },
   { label: 'Stamp Duty',       href: '/tools/stamp-duty' },
   { label: 'Lease Extension',  href: '/tools/lease-extension' },
+  { label: 'Documents',        href: '/tools/documents' },
 ]
 
 const OWNER_LINKS = [

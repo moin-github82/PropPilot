@@ -41,6 +41,9 @@ interface CrimeResult {
   incidentsPerMonth: number
   topCategories:     { category: string; count: number }[]
   dataDate:          string
+  /** Set when crime data is unavailable for this region (e.g. Scotland) */
+  message?:  string
+  checkUrl?: string
 }
 
 interface BroadbandResult {
@@ -429,7 +432,7 @@ export default function PropertyReportPage() {
                   )
                 })()}
                 {/* Crime */}
-                {report.crime && (() => {
+                {report.crime && !report.crime.message && (() => {
                   const r = crimeRating(report.crime.incidentsPerMonth)
                   return (
                     <div style={{ background: r.bg, border: `1px solid ${r.border}`, borderRadius: 10, padding: '12px 14px' }}>
@@ -578,6 +581,29 @@ export default function PropertyReportPage() {
 
               {/* ── 3. Crime ── */}
               {report.crime && (() => {
+                // Scotland (and any region without Police.uk data): show the message card
+                if (report.crime.message) {
+                  return (
+                    <div style={card} className="print-card">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                        <span style={{ fontSize: 24 }}>🚨</span>
+                        <h3 style={sectionHead}>Crime Statistics</h3>
+                      </div>
+                      <div style={{ background: '#f8f7f4', borderRadius: 10, padding: '16px', marginBottom: 12 }}>
+                        <p style={{ fontSize: 13, color: '#5e5a52', margin: '0 0 8px', lineHeight: 1.6 }}>
+                          {report.crime.message}
+                        </p>
+                        {report.crime.checkUrl && (
+                          <a href={report.crime.checkUrl} target="_blank" rel="noreferrer"
+                             style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
+                            → Check your local police area ↗
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
                 const r = crimeRating(report.crime.incidentsPerMonth)
                 return (
                   <div style={card} className="print-card">

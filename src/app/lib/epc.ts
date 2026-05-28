@@ -111,7 +111,7 @@ function getAuthHeader(): string {
 }
 
 const EPC_BASE    = 'https://epc.opendatacommunities.org/api/v1'
-const EPC_BASE_SCO = 'https://api.epcdata.scot/ew-compatible/v1'
+const EPC_BASE_SCO = 'https://api.epcdata.scot/ew-compatible'
 
 // ─── Scottish postcode detection ─────────────────────────────────────────────
 
@@ -147,16 +147,25 @@ export async function searchByPostcodeScotland(
   if (!auth) return null                     // key not configured — signal caller to fall through
 
   const clean = postcode.replace(/\s/g, '').toUpperCase()
-  // No try/catch: auth and network errors propagate to the route handler so they
-  // surface as a proper error message instead of silently returning empty results.
-  const response = await axios.get(`${EPC_BASE_SCO}/domestic/search`, {
-    headers: { Authorization: auth, Accept: 'application/json' },
-    params: { postcode: clean, 'page-size': 10, from: 0 },
-    timeout: 10000,
-  })
-  const rows: EPCCertificate[] = response.data?.rows ?? []
-  console.log(`[EPC Scotland] postcode=${clean} rows=${rows.length} status=${response.status}`)
-  return rows
+  try {
+    const response = await axios.get(`${EPC_BASE_SCO}/domestic/search`, {
+      headers: { Authorization: auth, Accept: 'application/json' },
+      params: { postcode: clean, limit: 25 },
+      timeout: 10000,
+    })
+    const rows: EPCCertificate[] = response.data?.rows ?? []
+    console.log(`[EPC Scotland] postcode=${clean} rows=${rows.length} status=${response.status}`)
+    return rows
+  } catch (err) {
+    // epcdata.scot returns 404 when no certificates exist for this postcode.
+    // Treat it as an empty result rather than a hard error.
+    if (axios.isAxiosError(err) && err.response?.status === 404) {
+      console.log(`[EPC Scotland] postcode=${clean} 404 — no certificates in Scottish register`)
+      return []
+    }
+    // Auth / network errors still propagate so the route can show the right message.
+    throw err
+  }
 }
 
 /**

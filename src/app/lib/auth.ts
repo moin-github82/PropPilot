@@ -35,9 +35,22 @@ const DEMO_USERS: Array<User & { password: string }> = [
   { email: 'agent@prophealth.com', password: 'PropDemo2024', name: 'Demo Agent', role: 'buyer', plan: 'enterprise' },
 ]
 
-const AUTH_KEY = 'pp_auth'
+const AUTH_KEY     = 'pp_auth'
 const PROPERTY_KEY = 'pp_property'
-const SIGNUPS_KEY = 'pp_signups'
+const SIGNUPS_KEY  = 'pp_signups'
+const SESSION_COOKIE = 'pp_session'
+
+// ── Cookie helpers (keeps middleware in sync with localStorage) ───────────────
+function setSessionCookie() {
+  // SameSite=Lax means the cookie is readable by the same-origin middleware.
+  // Not httpOnly so JS can clear it on logout; no sensitive data stored here.
+  const maxAge = 60 * 60 * 24 * 7 // 7 days
+  document.cookie = `${SESSION_COOKIE}=1; path=/; max-age=${maxAge}; SameSite=Lax`
+}
+
+function clearSessionCookie() {
+  document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`
+}
 
 // Returns the dashboard path for a role
 export function dashboardPath(role: UserRole): string {
@@ -53,6 +66,7 @@ export function login(email: string, password: string): User | null {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _pw, ...user } = demoMatch
     localStorage.setItem(AUTH_KEY, JSON.stringify({ user, loggedInAt: new Date().toISOString() }))
+    setSessionCookie()
     return user
   }
 
@@ -64,6 +78,7 @@ export function login(email: string, password: string): User | null {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _pw, ...user } = match
       localStorage.setItem(AUTH_KEY, JSON.stringify({ user, loggedInAt: new Date().toISOString() }))
+      setSessionCookie()
       return user
     }
   } catch {}
@@ -83,6 +98,7 @@ export function signup(email: string, password: string, name: string, role: User
     signups.push({ ...user, password })
     localStorage.setItem(SIGNUPS_KEY, JSON.stringify(signups))
     localStorage.setItem(AUTH_KEY, JSON.stringify({ user, loggedInAt: new Date().toISOString() }))
+    setSessionCookie()
     return user
   } catch {
     return null
@@ -91,6 +107,7 @@ export function signup(email: string, password: string, name: string, role: User
 
 export function logout(): void {
   localStorage.removeItem(AUTH_KEY)
+  clearSessionCookie()
 }
 
 export function getUser(): User | null {

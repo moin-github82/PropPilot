@@ -1,21 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { login, isAuthenticated, dashboardPath } from '../lib/auth'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') ?? ''
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Already logged in → skip to dashboard
+  // Already logged in → skip to dashboard (or redirect target)
   useEffect(() => {
-    if (isAuthenticated()) router.replace('/dashboard')
-  }, [router])
+    if (isAuthenticated()) {
+      router.replace(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard')
+    }
+  }, [router, redirectTo])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +32,7 @@ export default function LoginPage() {
       const user = login(email, password)
       setLoading(false)
       if (user) {
-        router.push(dashboardPath(user.role))
+        router.push(redirectTo && redirectTo.startsWith('/') ? redirectTo : dashboardPath(user.role))
       } else {
         setError('Incorrect email or password. Try the demo credentials below.')
       }
@@ -52,6 +57,20 @@ export default function LoginPage() {
         padding: '24px',
       }}
     >
+      {/* Redirect notice */}
+      {redirectTo && redirectTo.startsWith('/') && (
+        <div style={{
+          width: '100%', maxWidth: 500, marginBottom: 16,
+          background: '#fffbeb', border: '1px solid #fde68a',
+          borderRadius: 12, padding: '10px 16px',
+          fontSize: 13, color: '#92400e',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>🔒</span>
+          <span>Sign in to access <strong>{redirectTo}</strong></span>
+        </div>
+      )}
+
       {/* Logo */}
       <Link href="/" style={{ textDecoration: 'none', marginBottom: 36 }}>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: '#1a1917' }}>
@@ -76,7 +95,7 @@ export default function LoginPage() {
           Sign in to your account
         </h1>
         <p style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>
-          Sign in to your PropHealth account
+          Sign in to your PropPilot account
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -270,8 +289,16 @@ export default function LoginPage() {
       </p>
 
       <p style={{ fontSize: 13, color: '#999', marginTop: 16 }}>
-        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropHealth.co.uk</Link>
+        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropPilot</Link>
       </p>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   )
 }

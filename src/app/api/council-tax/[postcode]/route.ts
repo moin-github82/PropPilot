@@ -33,14 +33,13 @@ export async function GET(
     return NextResponse.json({ error: 'Could not geocode postcode' }, { status: 404 })
   }
 
-  // Homedata/VOA band lookup only covers England & Wales -- skip for Scotland
-  // (Scottish bands are held by SAA; no public programmatic API exists)
+  // Try Homedata for Scotland too -- they may have licensed SAA data via UPRN.
+  // We only skip the address-text fallback for Scotland (UPRN is reliable; text
+  // parsing against SAA address formats is not).
   const isScotland = geo.country?.toLowerCase().includes('scotland') ?? false
-  const actualBand = isScotland
-    ? null
-    : uprn
+  const actualBand = uprn
     ? await getCouncilTaxBandByUprn(Number(uprn))
-    : address
+    : !isScotland && address
     ? await getActualCouncilTaxBand(postcode, address)
     : null
 

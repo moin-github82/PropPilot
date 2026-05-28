@@ -36,3 +36,11 @@ next-env.d.ts
 *.docx
 *.pdf
 *.pptx
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/DocumentRegistry.address.json
+
+# Local file uploads (dev mode)
+tmp/uploads/
