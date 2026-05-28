@@ -143,17 +143,14 @@ function LoginForm() {
 
           {/* Password */}
           <div>
-            <label
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: '#333',
-                display: 'block',
-                marginBottom: 6,
-              }}
-            >
-              Password
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>
+                Password
+              </label>
+              <Link href="/forgot-password" style={{ fontSize: 12, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required

@@ -35,10 +35,11 @@ const DEMO_USERS: Array<User & { password: string }> = [
   { email: 'agent@prophealth.com', password: 'PropDemo2024', name: 'Demo Agent', role: 'buyer', plan: 'enterprise' },
 ]
 
-const AUTH_KEY     = 'pp_auth'
-const PROPERTY_KEY = 'pp_property'
-const SIGNUPS_KEY  = 'pp_signups'
+const AUTH_KEY       = 'pp_auth'
+const PROPERTY_KEY   = 'pp_property'
+const SIGNUPS_KEY    = 'pp_signups'
 const SESSION_COOKIE = 'pp_session'
+const RESETS_KEY     = 'pp_resets'
 
 // ── Cookie helpers (keeps middleware in sync with localStorage) ───────────────
 function setSessionCookie() {
@@ -139,4 +140,73 @@ export function saveProperty(p: StoredProperty): void {
 
 export function clearProperty(): void {
   localStorage.removeItem(PROPERTY_KEY)
+}
+
+// ── Password reset ────────────────────────────────────────────────────────────
+
+interface ResetEntry { email: string; token: string; expiresAt: string }
+
+/** Returns true if the email belongs to a hardcoded demo account. */
+export function isDemoEmail(email: string): boolean {
+  return DEMO_USERS.some(u => u.email.toLowerCase() === email.toLowerCase())
+}
+
+/**
+ * Creates a 1-hour reset token for a signed-up user.
+ * Returns the token string, or null if the email is not found in signups.
+ * (Demo accounts are not resettable — call isDemoEmail first.)
+ */
+export function requestPasswordReset(email: string): string | null {
+  try {
+    const signups: Array<User & { password: string }> = JSON.parse(localStorage.getItem(SIGNUPS_KEY) ?? '[]')
+    const exists = signups.some(u => u.email.toLowerCase() === email.toLowerCase())
+    if (!exists) return null
+
+    const token     = crypto.randomUUID().replace(/-/g, '')
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+
+    const resets: ResetEntry[] = JSON.parse(localStorage.getItem(RESETS_KEY) ?? '[]')
+    const updated = resets.filter(r => r.email.toLowerCase() !== email.toLowerCase())
+    updated.push({ email: email.toLowerCase(), token, expiresAt })
+    localStorage.setItem(RESETS_KEY, JSON.stringify(updated))
+    return token
+  } catch {
+    return null
+  }
+}
+
+/** Validates a reset token (exists + not expired). */
+export function isValidResetToken(token: string): boolean {
+  try {
+    const resets: ResetEntry[] = JSON.parse(localStorage.getItem(RESETS_KEY) ?? '[]')
+    const entry = resets.find(r => r.token === token)
+    return !!entry && new Date(entry.expiresAt) > new Date()
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Applies a new password using the reset token.
+ * Returns true on success, false if the token is invalid/expired.
+ */
+export function resetPassword(token: string, newPassword: string): boolean {
+  try {
+    const resets: ResetEntry[] = JSON.parse(localStorage.getItem(RESETS_KEY) ?? '[]')
+    const entry = resets.find(r => r.token === token)
+    if (!entry || new Date(entry.expiresAt) <= new Date()) return false
+
+    const signups: Array<User & { password: string }> = JSON.parse(localStorage.getItem(SIGNUPS_KEY) ?? '[]')
+    const idx = signups.findIndex(u => u.email.toLowerCase() === entry.email)
+    if (idx === -1) return false
+
+    signups[idx].password = newPassword
+    localStorage.setItem(SIGNUPS_KEY, JSON.stringify(signups))
+
+    // Consume the token so it can't be reused
+    localStorage.setItem(RESETS_KEY, JSON.stringify(resets.filter(r => r.token !== token)))
+    return true
+  } catch {
+    return false
+  }
 }
