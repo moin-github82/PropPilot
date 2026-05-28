@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
 
 // ─── Lease extension calculation (Leasehold Reform Act 1993) ──────────────────
 //
@@ -108,6 +109,7 @@ export default function LeaseExtensionPage() {
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 500, color: '#5e5a52', display: 'block', marginBottom: 6 }
 
   return (
+    <RequireAuth>
     <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
@@ -215,5 +217,6 @@ export default function LeaseExtensionPage() {
       </main>
       <Footer />
     </div>
+    </RequireAuth>
   )
 }

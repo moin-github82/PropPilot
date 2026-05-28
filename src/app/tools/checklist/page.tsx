@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -400,6 +401,7 @@ export default function ChecklistPage() {
   const activeList = CHECKLISTS.find(c => c.id === tab)
 
   return (
+    <RequireAuth>
     <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
@@ -821,5 +823,6 @@ export default function ChecklistPage() {
         </div>
       )}
     </div>
+    </RequireAuth>
   )
 }

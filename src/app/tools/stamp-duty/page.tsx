@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
 
 // ─── SDLT calculation engine ──────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ export default function StampDutyPage() {
   }
 
   return (
+    <RequireAuth>
     <div style={{ minHeight: '100vh', background: '#f8f7f4', display: 'flex', flexDirection: 'column' }}>
       <SiteNav />
 
@@ -209,5 +211,6 @@ export default function StampDutyPage() {
       </main>
       <Footer />
     </div>
+    </RequireAuth>
   )
 }

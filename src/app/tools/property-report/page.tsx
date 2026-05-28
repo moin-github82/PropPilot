@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -250,6 +251,7 @@ export default function PropertyReportPage() {
   }
 
   return (
+    <RequireAuth>
     <>
       {/* Print styles */}
       <style>{`
@@ -832,6 +834,7 @@ export default function PropertyReportPage() {
         <Footer />
       </div>
     </>
+    </RequireAuth>
   )
 }
 
