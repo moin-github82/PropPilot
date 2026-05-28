@@ -71,11 +71,34 @@ const SAMPLE_PROPERTY: Omit<StoredProperty, 'addedAt'> = {
   mortgageRate:   3.84,
 }
 
+/** Extract house number and street from a full address string. */
+function parseHouseAndStreet(fullAddress: string): { houseNumber: string; street: string } {
+  const firstLine = fullAddress.split(',')[0].trim()
+  // Match leading number (with optional letter suffix) then street name
+  const m = firstLine.match(/^(\d+[A-Za-z]?)\s+(.+)$/i)
+  if (m) return { houseNumber: m[1], street: m[2] }
+  // Flat / Apartment prefix: e.g. "FLAT 3 14 HIGH STREET"
+  const flat = firstLine.match(/^((?:FLAT|APT|APARTMENT|UNIT)\s+\S+)\s+(\d+[A-Za-z]?)\s+(.+)$/i)
+  if (flat) return { houseNumber: `${flat[1]} ${flat[2]}`, street: flat[3] }
+  return { houseNumber: '', street: firstLine }
+}
+
 function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
+  // ── Address lookup state ───────────────────────────────────────────────────
+  const [postcodeInput,      setPostcodeInput]      = useState('')
+  const [addressOptions,     setAddressOptions]     = useState<{ uprn: number; address: string }[]>([])
+  const [selectedUprn,       setSelectedUprn]       = useState<number | null>(null)
+  const [loadingAddresses,   setLoadingAddresses]   = useState(false)
+  const [addressLookupDone,  setAddressLookupDone]  = useState(false)
+  const [addressLookupError, setAddressLookupError] = useState('')
+  const [addressConfirmed,   setAddressConfirmed]   = useState(false)
+
+  // ── Property details form state ────────────────────────────────────────────
   const [form, setForm] = useState({
     postcode:       '',
     houseNumber:    '',
     street:         '',
+    address:        '',
     tenure:         'Freehold' as 'Freehold' | 'Leasehold',
     purchasePrice:  '',
     purchaseDate:   '',
@@ -85,16 +108,24 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
     mortgageFixEnd: '',
     mortgageRate:   '',
   })
-  const [loading, setLoading] = useState(false)
-  const [epcStatus, setEpcStatus] = useState<string | null>(null)
+  const [epcLoading, setEpcLoading] = useState(false)
+  const [epcStatus,  setEpcStatus]  = useState<string | null>(null)
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
+  // ── Load sample ────────────────────────────────────────────────────────────
   const loadSample = () => {
+    setPostcodeInput(SAMPLE_PROPERTY.postcode)
+    setAddressOptions([])
+    setSelectedUprn(null)
+    setAddressLookupDone(false)
+    setAddressLookupError('')
+    setAddressConfirmed(true)
     setForm({
       postcode:       SAMPLE_PROPERTY.postcode,
       houseNumber:    SAMPLE_PROPERTY.houseNumber,
       street:         SAMPLE_PROPERTY.street,
+      address:        SAMPLE_PROPERTY.address,
       tenure:         SAMPLE_PROPERTY.tenure,
       purchasePrice:  String(SAMPLE_PROPERTY.purchasePrice ?? ''),
       purchaseDate:   SAMPLE_PROPERTY.purchaseDate ?? '',
@@ -106,40 +137,69 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
     })
   }
 
-  /** Try to look up EPC band from the API when postcode + address are filled in */
-  const fetchEPC = async () => {
-    if (!form.postcode || !form.houseNumber || !form.street) return
-    setLoading(true)
+  // ── Step 1: look up addresses by postcode ──────────────────────────────────
+  const fetchAddresses = async (pc: string) => {
+    const clean = pc.trim().replace(/\s+/g, '').toUpperCase()
+    if (clean.length < 5) return
+    setLoadingAddresses(true)
+    setAddressLookupDone(false)
+    setAddressOptions([])
+    setSelectedUprn(null)
+    setAddressLookupError('')
+    setAddressConfirmed(false)
+    try {
+      const res  = await fetch(`/api/address-lookup/${encodeURIComponent(clean)}`)
+      const data = await res.json()
+      if (res.ok && Array.isArray(data) && data.length > 0) {
+        setAddressOptions(data)
+      } else {
+        setAddressLookupError(data?.error ?? 'No addresses found for this postcode.')
+      }
+    } catch (e) {
+      setAddressLookupError(e instanceof Error ? e.message : 'Network error — please try again.')
+    }
+    setLoadingAddresses(false)
+    setAddressLookupDone(true)
+  }
+
+  // ── Step 2: auto-fill form when address is chosen ─────────────────────────
+  const handleAddressSelect = async (uprn: number) => {
+    const opt = addressOptions.find(o => o.uprn === uprn)
+    if (!opt) return
+    setSelectedUprn(uprn)
+    const { houseNumber, street } = parseHouseAndStreet(opt.address)
+    const postcode = postcodeInput.trim().replace(/\s+/g, ' ').toUpperCase()
+    setForm(f => ({ ...f, postcode, houseNumber, street, address: opt.address }))
+    setAddressConfirmed(true)
+
+    // Auto-trigger EPC lookup
+    setEpcLoading(true)
     setEpcStatus('Looking up EPC certificate…')
     try {
-      const address  = `${form.houseNumber} ${form.street}`
-      const postcode = form.postcode.replace(/\s/g, '').toUpperCase()
-      const res  = await fetch(`/api/epc/${encodeURIComponent(postcode)}?address=${encodeURIComponent(address)}`)
+      const pc  = postcode.replace(/\s/g, '').toUpperCase()
+      const res = await fetch(`/api/epc/${encodeURIComponent(pc)}?address=${encodeURIComponent(opt.address)}`)
       const data = await res.json()
       if (data.found && data.certificate) {
         const cert = data.certificate
-        setForm(f => ({
-          ...f,
-          epcBand:   cert.currentBand ?? f.epcBand,
-          yearBuilt: cert.builtForm ? f.yearBuilt : f.yearBuilt,  // keep user value
-        }))
-        setEpcStatus(`EPC found — Band ${cert.currentBand} (score ${cert.currentScore}/100)`)
+        setForm(f => ({ ...f, epcBand: cert.currentBand ?? f.epcBand }))
+        setEpcStatus(`✓ EPC found — Band ${cert.currentBand} (score ${cert.currentScore}/100)`)
       } else {
-        setEpcStatus('No EPC found for this address — fill in manually if known')
+        setEpcStatus('No EPC certificate found — fill in manually if known')
       }
     } catch {
-      setEpcStatus('Could not fetch EPC — fill in manually')
+      setEpcStatus('Could not fetch EPC — fill in manually if known')
     }
-    setLoading(false)
+    setEpcLoading(false)
   }
 
+  // ── Save ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const p: StoredProperty = {
-      postcode:       form.postcode.toUpperCase(),
+      postcode:       form.postcode || postcodeInput.trim().toUpperCase(),
       houseNumber:    form.houseNumber,
       street:         form.street,
-      address:        `${form.houseNumber} ${form.street}, ${form.postcode.toUpperCase()}`,
+      address:        form.address || `${form.houseNumber} ${form.street}, ${form.postcode.toUpperCase()}`,
       tenure:         form.tenure,
       purchasePrice:  form.purchasePrice  ? Number(form.purchasePrice)  : null,
       purchaseDate:   form.purchaseDate   || null,
@@ -161,10 +221,13 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
     background: '#fff', color: 'var(--slate-800)', outline: 'none',
     fontFamily: 'var(--font-body)',
   }
-
   const labelStyle: React.CSSProperties = {
     fontSize: 12, fontWeight: 500, color: 'var(--slate-600)',
     display: 'block', marginBottom: 5,
+  }
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 13, fontWeight: 600, color: 'var(--slate-500)',
+    letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16,
   }
 
   return (
@@ -175,7 +238,7 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
           Add your property
         </h2>
         <p style={{ fontSize: 14, color: 'var(--slate-500)', maxWidth: 400, margin: '0 auto' }}>
-          We&apos;ll use this to personalise your dashboard and keep track of everything in one place.
+          Search by postcode to find your address, then fill in your property details.
         </p>
       </div>
 
@@ -190,114 +253,172 @@ function SetupWizard({ onSave }: { onSave: (p: StoredProperty) => void }) {
       >
         <span style={{ fontSize: 18 }}>🏠</span>
         <div>
-          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--brand-800)', margin: 0 }}>
-            Load sample property
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--brand-600)', margin: 0 }}>
-            Use 14 Alderton Close, Milton Keynes — to demo the full dashboard
-          </p>
+          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--brand-800)', margin: 0 }}>Load sample property</p>
+          <p style={{ fontSize: 12, color: 'var(--brand-600)', margin: 0 }}>14 Alderton Close, Milton Keynes — demo the full dashboard</p>
         </div>
         <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--brand-400)' }}>Click →</span>
       </div>
 
       <form onSubmit={handleSubmit} className="card" style={{ padding: 28 }}>
-        {/* Address */}
-        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Property address</p>
-        <div className="pp-form-grid-1-2">
+
+        {/* ── Step 1: Postcode search ──────────────────────────────────────── */}
+        <p style={sectionLabel}>Find your property</p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 12 }}>
           <div>
-            <label style={labelStyle}>House / flat no.</label>
-            <input style={inputStyle} required value={form.houseNumber} onChange={e => set('houseNumber', e.target.value)} placeholder="14" />
+            <label style={labelStyle}>Postcode *</label>
+            <input
+              style={inputStyle}
+              value={postcodeInput}
+              onChange={e => {
+                setPostcodeInput(e.target.value)
+                setAddressOptions([])
+                setSelectedUprn(null)
+                setAddressLookupDone(false)
+                setAddressConfirmed(false)
+                set('postcode', '')
+              }}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), fetchAddresses(postcodeInput))}
+              placeholder="e.g. SW1A 1AA"
+            />
           </div>
-          <div>
-            <label style={labelStyle}>Street name</label>
-            <input style={inputStyle} required value={form.street} onChange={e => set('street', e.target.value)} placeholder="Alderton Close" />
-          </div>
-        </div>
-        <div className="pp-form-grid-2" style={{ marginBottom: 8 }}>
-          <div>
-            <label style={labelStyle}>Postcode</label>
-            <input style={inputStyle} required value={form.postcode} onChange={e => set('postcode', e.target.value)} placeholder="MK9 3AG" />
-          </div>
-          <div>
-            <label style={labelStyle}>Tenure</label>
-            <select
-              value={form.tenure}
-              onChange={e => set('tenure', e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => fetchAddresses(postcodeInput)}
+              disabled={loadingAddresses || postcodeInput.trim().length < 5}
+              style={{
+                height: 42, padding: '0 16px', fontSize: 13, fontWeight: 500,
+                background: 'var(--slate-900)', color: '#fff',
+                border: 'none', borderRadius: 'var(--radius-md)',
+                cursor: loadingAddresses || postcodeInput.trim().length < 5 ? 'not-allowed' : 'pointer',
+                opacity: postcodeInput.trim().length < 5 ? 0.45 : 1,
+                fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+              }}
             >
-              <option value="Freehold">Freehold</option>
-              <option value="Leasehold">Leasehold</option>
-            </select>
+              {loadingAddresses ? '⏳ Searching…' : '🔍 Find addresses'}
+            </button>
           </div>
         </div>
 
-        {/* EPC lookup */}
-        <button
-          type="button" onClick={fetchEPC} disabled={loading}
-          style={{
-            fontSize: 13, color: 'var(--brand-600)', background: 'var(--brand-50)',
-            border: '1px solid var(--brand-200)', borderRadius: 'var(--radius-md)',
-            padding: '7px 14px', cursor: 'pointer', marginBottom: 4,
-          }}
-        >
-          {loading ? 'Fetching EPC…' : '🔍 Look up EPC certificate'}
-        </button>
+        {/* Address dropdown */}
+        {addressOptions.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Select your address *</label>
+            <select
+              value={selectedUprn ?? ''}
+              onChange={e => {
+                const uprn = Number(e.target.value)
+                if (uprn) handleAddressSelect(uprn)
+              }}
+              style={{ ...inputStyle, cursor: 'pointer', height: 42 }}
+            >
+              <option value="">— Choose your address —</option>
+              {addressOptions.map(opt => (
+                <option key={opt.uprn} value={opt.uprn}>{opt.address}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* EPC status */}
         {epcStatus && (
-          <p style={{ fontSize: 12, color: epcStatus.includes('found —') ? 'var(--brand-600)' : 'var(--slate-500)', margin: '4px 0 12px' }}>
-            {epcStatus}
+          <p style={{
+            fontSize: 12, margin: '0 0 12px',
+            color: epcStatus.startsWith('✓') ? 'var(--brand-600)' : 'var(--slate-400)',
+          }}>
+            {epcLoading ? '⏳ ' : ''}{epcStatus}
           </p>
         )}
 
-        <div style={{ height: 1, background: 'var(--slate-100)', margin: '20px 0' }} />
+        {/* Address lookup error */}
+        {addressLookupDone && addressOptions.length === 0 && !loadingAddresses && addressLookupError && (
+          <div style={{
+            marginBottom: 12, background: '#fff1f2', border: '1px solid #fda4af',
+            borderRadius: 'var(--radius-md)', padding: '10px 14px',
+            fontSize: 12, color: '#9f1239',
+          }}>
+            {addressLookupError}
+          </div>
+        )}
 
-        {/* Property details */}
-        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Property details</p>
-        <div className="pp-form-grid-3">
-          <div>
-            <label style={labelStyle}>Year built</label>
-            <input style={inputStyle} type="number" value={form.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} placeholder="1989" min="1600" max="2025" />
+        {/* Confirmed address pill */}
+        {addressConfirmed && form.address && (
+          <div style={{
+            marginBottom: 16, background: '#f0fdf4', border: '1px solid #86efac',
+            borderRadius: 'var(--radius-md)', padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ fontSize: 14 }}>✓</span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 500, color: '#14532d', margin: 0 }}>{form.address}</p>
+              <p style={{ fontSize: 11, color: '#166534', margin: '2px 0 0' }}>{form.postcode}</p>
+            </div>
           </div>
-          <div>
-            <label style={labelStyle}>EPC band</label>
-            <select value={form.epcBand} onChange={e => set('epcBand', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
-              <option value="">Unknown</option>
-              {['A','B','C','D','E','F','G'].map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Est. current value</label>
-            <input style={inputStyle} type="number" value={form.estimatedValue} onChange={e => set('estimatedValue', e.target.value)} placeholder="312000" />
-          </div>
+        )}
+
+        {/* Tenure — always visible */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Tenure</label>
+          <select value={form.tenure} onChange={e => set('tenure', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <option value="Freehold">Freehold</option>
+            <option value="Leasehold">Leasehold</option>
+          </select>
         </div>
 
-        <div style={{ height: 1, background: 'var(--slate-100)', margin: '20px 0' }} />
+        {/* ── Step 2: Property details (shown once address confirmed) ─────── */}
+        {addressConfirmed && (
+          <>
+            <div style={{ height: 1, background: 'var(--slate-100)', margin: '8px 0 20px' }} />
+            <p style={sectionLabel}>Property details</p>
+            <div className="pp-form-grid-3">
+              <div>
+                <label style={labelStyle}>Year built</label>
+                <input style={inputStyle} type="number" value={form.yearBuilt} onChange={e => set('yearBuilt', e.target.value)} placeholder="1989" min="1600" max="2025" />
+              </div>
+              <div>
+                <label style={labelStyle}>EPC band</label>
+                <select value={form.epcBand} onChange={e => set('epcBand', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option value="">Unknown</option>
+                  {['A','B','C','D','E','F','G'].map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Est. current value</label>
+                <input style={inputStyle} type="number" value={form.estimatedValue} onChange={e => set('estimatedValue', e.target.value)} placeholder="312000" />
+              </div>
+            </div>
 
-        {/* Purchase & mortgage */}
-        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate-500)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16 }}>Purchase & mortgage</p>
-        <div className="pp-form-grid-2">
-          <div>
-            <label style={labelStyle}>Purchase price</label>
-            <input style={inputStyle} type="number" value={form.purchasePrice} onChange={e => set('purchasePrice', e.target.value)} placeholder="285000" />
-          </div>
-          <div>
-            <label style={labelStyle}>Purchase date</label>
-            <input style={inputStyle} type="date" value={form.purchaseDate} onChange={e => set('purchaseDate', e.target.value)} />
-          </div>
-        </div>
-        <div className="pp-form-grid-2" style={{ marginBottom: 0 }}>
-          <div>
-            <label style={labelStyle}>Mortgage fix end date</label>
-            <input style={inputStyle} type="date" value={form.mortgageFixEnd} onChange={e => set('mortgageFixEnd', e.target.value)} />
-          </div>
-          <div>
-            <label style={labelStyle}>Current rate (%)</label>
-            <input style={inputStyle} type="number" step="0.01" value={form.mortgageRate} onChange={e => set('mortgageRate', e.target.value)} placeholder="3.84" />
-          </div>
-        </div>
+            <div style={{ height: 1, background: 'var(--slate-100)', margin: '20px 0' }} />
 
-        <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 24 }}>
-          Save property and open dashboard →
-        </button>
+            <p style={sectionLabel}>Purchase & mortgage</p>
+            <div className="pp-form-grid-2">
+              <div>
+                <label style={labelStyle}>Purchase price</label>
+                <input style={inputStyle} type="number" value={form.purchasePrice} onChange={e => set('purchasePrice', e.target.value)} placeholder="285000" />
+              </div>
+              <div>
+                <label style={labelStyle}>Purchase date</label>
+                <input style={inputStyle} type="date" value={form.purchaseDate} onChange={e => set('purchaseDate', e.target.value)} />
+              </div>
+            </div>
+            <div className="pp-form-grid-2" style={{ marginBottom: 0 }}>
+              <div>
+                <label style={labelStyle}>Mortgage fix end date</label>
+                <input style={inputStyle} type="date" value={form.mortgageFixEnd} onChange={e => set('mortgageFixEnd', e.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>Current rate (%)</label>
+                <input style={inputStyle} type="number" step="0.01" value={form.mortgageRate} onChange={e => set('mortgageRate', e.target.value)} placeholder="3.84" />
+              </div>
+            </div>
+
+            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 24 }}>
+              Save property and open dashboard →
+            </button>
+          </>
+        )}
+
       </form>
     </div>
   )
