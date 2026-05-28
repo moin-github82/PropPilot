@@ -62,7 +62,7 @@ function ResetPasswordForm() {
       {/* Logo */}
       <Link href="/" style={{ textDecoration: 'none', marginBottom: 36 }}>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: '#1a1917' }}>
-          Prop<span style={{ color: '#1D9E75' }}>Pilot</span>
+          Prop<span style={{ color: '#1D9E75' }}>Health</span>
         </span>
       </Link>
 

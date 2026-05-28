@@ -78,7 +78,7 @@ function LoginForm() {
       {/* Logo */}
       <Link href="/" style={{ textDecoration: 'none', marginBottom: 36 }}>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: '#1a1917' }}>
-          Prop<span style={{ color: '#1D9E75' }}>Pilot</span>
+          Prop<span style={{ color: '#1D9E75' }}>Health</span>
         </span>
       </Link>
 
@@ -99,7 +99,7 @@ function LoginForm() {
           Sign in to your account
         </h1>
         <p style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>
-          Sign in to your PropPilot account
+          Sign in to your PropHealth account
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -292,7 +292,7 @@ function LoginForm() {
       </p>
 
       <p style={{ fontSize: 13, color: '#999', marginTop: 16 }}>
-        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropPilot</Link>
+        ← <Link href="/" style={{ color: '#666', textDecoration: 'none' }}>Back to PropHealth</Link>
       </p>
     </div>
   )
