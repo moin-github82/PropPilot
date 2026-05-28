@@ -32,7 +32,11 @@ function LoginForm() {
       const user = login(email, password)
       setLoading(false)
       if (user) {
-        router.push(redirectTo && redirectTo.startsWith('/') ? redirectTo : dashboardPath(user.role))
+        // Use a hard redirect so the full page load picks up the fresh
+        // pp_session cookie and localStorage before any middleware or
+        // dashboard useEffect runs — avoids the soft-navigation race condition.
+        const dest = redirectTo && redirectTo.startsWith('/') ? redirectTo : dashboardPath(user.role)
+        window.location.href = dest
       } else {
         setError('Incorrect email or password. Try the demo credentials below.')
       }
