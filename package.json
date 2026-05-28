@@ -8,10 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "npx tsx --test src/__tests__/*.test.ts",
-    "test:watch": "npx tsx --test --watch src/__tests__/*.test.ts",
-    "compile:contract": "hardhat compile",
-    "deploy:contract": "hardhat run scripts/deploy-registry.ts --network amoy",
-    "deploy:local": "hardhat run scripts/deploy-registry.ts --network localhost"
+    "test:watch": "npx tsx --test --watch src/__tests__/*.test.ts"
   },
   "dependencies": {
     "next": "^15.3.1",
@@ -20,9 +17,7 @@
     "axios": "^1.8.4",
     "ioredis": "^5.4.2",
     "stripe": "^17.7.0",
-    "zod": "^3.24.2",
-    "ethers": "^6.13.0",
-    "@vercel/blob": "^0.27.0"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -33,9 +28,6 @@
     "postcss": "^8",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
-    "eslint-config-next": "^15.3.1",
-    "hardhat": "^2.22.0",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-ethers": "^3.0.0"
+    "eslint-config-next": "^15.3.1"
   }
 }
