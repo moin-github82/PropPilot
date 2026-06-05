@@ -14,8 +14,9 @@ const tools = [
     href:        '/tools/property-report',
     icon:        '🔍',
     title:       'Property Due Diligence Report',
-    description: 'Enter an address and postcode to automatically check flood risk, EPC rating, crime stats, broadband speed, and council tax — and download a PDF report.',
+    description: 'Enter an address and postcode to automatically check flood risk, EPC rating, crime stats, broadband speed, radon risk, coal mining, and more — 18 checks in one report.',
     tag:         'Free with account',
+    section:     'buyers',
   },
   {
     href:        '/tools/stamp-duty',
@@ -23,6 +24,7 @@ const tools = [
     title:       'Stamp Duty Calculator',
     description: 'Calculate your SDLT bill instantly — including first-time buyer relief and the 3% surcharge for additional properties.',
     tag:         'Free with account',
+    section:     'buyers',
   },
   {
     href:        '/tools/lease-extension',
@@ -30,20 +32,7 @@ const tools = [
     title:       'Lease Extension Calculator',
     description: 'Estimate your lease extension premium using the Leasehold Reform Act 1993 formula. Know the cost before instructing a solicitor.',
     tag:         'Free with account',
-  },
-  {
-    href:        '/tools/maintenance',
-    icon:        '🔧',
-    title:       'Maintenance Calendar',
-    description: 'Track boiler services, gas safety checks, gutter cleans, and more. Get reminders before things become emergencies.',
-    tag:         'Pro',
-  },
-  {
-    href:        '/tools/documents',
-    icon:        '📁',
-    title:       'Document Vault',
-    description: 'Store your EPC certificate, survey report, gas safe certificate, and planning documents in one place.',
-    tag:         'Pro',
+    section:     'buyers',
   },
   {
     href:        '/tools/checklist',
@@ -51,6 +40,52 @@ const tools = [
     title:       'Property Buying Checklists',
     description: 'Interactive checklists for every buyer type — full UK buying guide, first-time buyer checklist, buy-to-let investor checklist, and a property risk scoring matrix.',
     tag:         'Free with account',
+    section:     'buyers',
+  },
+  // ── PropHealth Niche Tools ───────────────────────────────────────────────────
+  {
+    href:        '/tools/help-to-buy',
+    icon:        '🏛️',
+    title:       'Help to Buy Equity Loan Calculator',
+    description: "The government owns a share of your home's CURRENT value — not what you paid. As prices rise, so does what you owe. See your real liability and future projections.",
+    tag:         'Free with account',
+    section:     'niche',
+    badge:       '🇬🇧 UK exclusive',
+  },
+  {
+    href:        '/tools/ground-rent',
+    icon:        '🚨',
+    title:       'Ground Rent Trap Analyser',
+    description: 'A £250/year doubling rent becomes £4,000/year in 40 years. Paste in your ground rent terms — see the 50-year projection, lender risk flags, and what to do before exchange.',
+    tag:         'Free with account',
+    section:     'niche',
+    badge:       'Leasehold trap',
+  },
+  {
+    href:        '/tools/mortgage-prisoner',
+    icon:        '🔒',
+    title:       'Am I a Mortgage Prisoner?',
+    description: '200,000 UK homeowners are overpaying on SVR because they feel stuck. Enter your rate, balance, and LTV to see if you can switch — and exactly how much you could save.',
+    tag:         'Free with account',
+    section:     'niche',
+    badge:       'New',
+  },
+  // ── Homeowner Tools ─────────────────────────────────────────────────────────
+  {
+    href:        '/tools/maintenance',
+    icon:        '🔧',
+    title:       'Maintenance Calendar',
+    description: 'Track boiler services, gas safety checks, gutter cleans, and more. Get reminders before things become emergencies.',
+    tag:         'Pro',
+    section:     'owners',
+  },
+  {
+    href:        '/tools/documents',
+    icon:        '📁',
+    title:       'Document Vault',
+    description: 'Store your EPC certificate, survey report, gas safe certificate, and planning documents in one place.',
+    tag:         'Pro',
+    section:     'owners',
   },
 ]
 
@@ -125,8 +160,55 @@ export default function ToolsPage() {
           </p>
         </div>
 
+        {/* ── PropHealth Niche Tools (featured) ───────────────────────── */}
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ height: 1, flex: 1, background: '#e2ddd6' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1D9E75', whiteSpace: 'nowrap' }}>PropHealth — UK Niche Tools 🇬🇧</span>
+            <div style={{ height: 1, flex: 1, background: '#e2ddd6' }} />
+          </div>
+          <p style={{ fontSize: 14, color: '#5e5a52', margin: '0 0 20px', maxWidth: 520 }}>
+            Risks no portal surfaces. Tools no other app has built.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 16 }}>
+            {tools.filter(t => t.section === 'niche').map(tool => (
+              <Link key={tool.href} href={tool.href} style={{ textDecoration: 'none' }}>
+                <div
+                  style={{
+                    background: '#fff', border: '2px solid #1D9E75', borderRadius: 16,
+                    padding: '28px', cursor: 'pointer', height: '100%',
+                    transition: 'box-shadow 0.15s, border-color 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(29,158,117,0.15)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                      {tool.icon}
+                    </div>
+                    {'badge' in tool && tool.badge && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: '#04342C', color: '#5DCAA5', padding: '3px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                        {tool.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span style={tagStyle(tool.tag)}>{tool.tag}</span>
+                  <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, color: '#1a1917', margin: '8px 0 10px' }}>{tool.title}</h2>
+                  <p style={{ fontSize: 13, color: '#5e5a52', lineHeight: 1.7, margin: 0 }}>{tool.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Standard Tools ──────────────────────────────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <div style={{ height: 1, flex: 1, background: '#e2ddd6' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e998f', whiteSpace: 'nowrap' }}>All tools</span>
+          <div style={{ height: 1, flex: 1, background: '#e2ddd6' }} />
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 16 }}>
-          {tools.map(tool => {
+          {tools.filter(t => t.section !== 'niche').map(tool => {
             const isPaidTool = PAID_TOOL_HREFS.has(tool.href)
             const locked = isPaidTool && !isPaid
 
@@ -139,16 +221,8 @@ export default function ToolsPage() {
                       padding: '28px', cursor: 'pointer', height: '100%',
                       transition: 'box-shadow 0.15s, border-color 0.15s', opacity: 0.85,
                     }}
-                    onMouseEnter={e => {
-                      const el = e.currentTarget as HTMLDivElement
-                      el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'
-                      el.style.borderColor = '#2563eb'
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget as HTMLDivElement
-                      el.style.boxShadow = 'none'
-                      el.style.borderColor = '#e2ddd6'
-                    }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; el.style.borderColor = '#2563eb' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.boxShadow = 'none'; el.style.borderColor = '#e2ddd6' }}
                   >
                     <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: 16, filter: 'grayscale(0.4)' }}>
                       {tool.icon}
@@ -173,16 +247,8 @@ export default function ToolsPage() {
                     padding: '28px', cursor: 'pointer', height: '100%',
                     transition: 'box-shadow 0.15s, border-color 0.15s',
                   }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLDivElement
-                    el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'
-                    el.style.borderColor = '#1D9E75'
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLDivElement
-                    el.style.boxShadow = 'none'
-                    el.style.borderColor = '#e2ddd6'
-                  }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; el.style.borderColor = '#1D9E75' }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.boxShadow = 'none'; el.style.borderColor = '#e2ddd6' }}
                 >
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f8f7f4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: 16 }}>
                     {tool.icon}

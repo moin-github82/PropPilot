@@ -747,6 +747,130 @@ function EPCUpgradeBanner({ property }: { property: StoredProperty }) {
   )
 }
 
+// ─── PropHealth Score widget ──────────────────────────────────────────────────
+
+function PropHealthScore({ property }: { property: StoredProperty }) {
+  // Derive a composite health score from what we know
+  const checks: { label: string; status: 'pass' | 'warn' | 'fail' | 'info'; detail: string; href?: string }[] = []
+
+  // EPC
+  const band = (property.epcBand ?? 'D').toUpperCase()
+  checks.push({
+    label: `EPC: Band ${band}`,
+    status: ['A','B','C'].includes(band) ? 'pass' : ['E','F','G'].includes(band) ? 'fail' : 'warn',
+    detail: ['A','B','C'].includes(band) ? '2030 target met' : 'Upgrade needed by 2030',
+    href:   '/dashboard/epc-upgrade',
+  })
+
+  // Remortgage
+  if (property.mortgageFixEnd) {
+    const days = Math.ceil((new Date(property.mortgageFixEnd).getTime() - Date.now()) / 86400000)
+    checks.push({
+      label: days < 0 ? 'Mortgage: expired' : days < 90 ? 'Mortgage: act now' : 'Mortgage: tracked',
+      status: days < 0 ? 'fail' : days < 90 ? 'warn' : 'pass',
+      detail: days < 0 ? 'Likely on SVR — switch now' : days < 90 ? `${days} days to fix end` : `Fix ends in ${Math.round(days/30)} months`,
+      href:   '/tools/mortgage-prisoner',
+    })
+  }
+
+  // Tenure
+  const isLeasehold = property.tenure?.toLowerCase().includes('leasehold')
+  checks.push({
+    label: isLeasehold ? 'Tenure: Leasehold' : 'Tenure: Freehold',
+    status: isLeasehold ? 'warn' : 'pass',
+    detail: isLeasehold ? 'Check ground rent & lease length' : 'No leasehold obligations',
+    href:   isLeasehold ? '/tools/ground-rent' : undefined,
+  })
+
+  // Property age (maintenance)
+  if (property.yearBuilt) {
+    const age = new Date().getFullYear() - property.yearBuilt
+    checks.push({
+      label: `Built ${property.yearBuilt}`,
+      status: age > 50 ? 'warn' : 'pass',
+      detail: age > 50 ? 'Older property — elevated maintenance risk' : 'Standard maintenance profile',
+      href:   '/tools/maintenance',
+    })
+  }
+
+  // Document vault
+  checks.push({
+    label: 'Documents',
+    status: 'info',
+    detail: 'Keep your certificates up to date',
+    href:   '/tools/documents',
+  })
+
+  // Score (pass=2, warn=1, fail=0, info=1)
+  const scores: Record<string, number> = { pass: 2, warn: 1, fail: 0, info: 1 }
+  const total = checks.reduce((sum, c) => sum + scores[c.status], 0)
+  const max   = checks.length * 2
+  const pct   = Math.round((total / max) * 100)
+
+  const scoreColor = pct >= 80 ? '#1D9E75' : pct >= 55 ? '#f59e0b' : '#ef4444'
+  const statusIcons: Record<string, string> = { pass: '✓', warn: '!', fail: '✗', info: '·' }
+  const statusColors: Record<string, string> = {
+    pass: '#1D9E75', warn: '#f59e0b', fail: '#ef4444', info: 'var(--slate-400)',
+  }
+
+  return (
+    <div className="card fade-up-d3" style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🏠</span>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate-900)', margin: 0 }}>PropHealth Score</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span style={{ fontSize: 26, fontWeight: 700, color: scoreColor, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{pct}</span>
+          <span style={{ fontSize: 10, color: 'var(--slate-400)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>/ 100</span>
+        </div>
+      </div>
+
+      {/* Score bar */}
+      <div style={{ height: 6, background: 'var(--slate-100)', borderRadius: 3, marginBottom: 18, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: scoreColor, borderRadius: 3, transition: 'width 0.6s ease' }} />
+      </div>
+
+      {/* Checks */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {checks.map((c, i) => (
+          <div
+            key={i}
+            onClick={() => c.href && (window.location.href = c.href)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 10px', borderRadius: 8, cursor: c.href ? 'pointer' : 'default',
+              background: 'var(--slate-50)', border: '1px solid var(--slate-100)',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => c.href && ((e.currentTarget as HTMLDivElement).style.background = 'var(--brand-50)')}
+            onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.background = 'var(--slate-50)')}
+          >
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              background: `${statusColors[c.status]}18`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: statusColors[c.status] }}>{statusIcons[c.status]}</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--slate-800)' }}>{c.label}</span>
+              <span style={{ fontSize: 12, color: 'var(--slate-400)', marginLeft: 8 }}>{c.detail}</span>
+            </div>
+            {c.href && <span style={{ fontSize: 11, color: 'var(--brand-400)' }}>→</span>}
+          </div>
+        ))}
+      </div>
+
+      {/* Niche tools promo */}
+      <div style={{ marginTop: 16, background: '#04342C', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <p style={{ fontSize: 12, color: '#9FE1CB', margin: 0 }}>🇬🇧 Help to Buy? Leasehold? Mortgage prisoner?</p>
+        <a href="/tools" style={{ fontSize: 12, fontWeight: 600, color: '#5DCAA5', textDecoration: 'none', whiteSpace: 'nowrap' }}>Niche tools →</a>
+      </div>
+    </div>
+  )
+}
+
 function QuickActions({ property }: { property: StoredProperty }) {
   const actions = [
     {
@@ -796,11 +920,12 @@ function QuickActions({ property }: { property: StoredProperty }) {
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 
 const OWNER_NAV_LINKS = [
-  { label: 'Dashboard',       href: '/dashboard' },
-  { label: 'Property report', href: '/tools/property-report' },
-  { label: 'Maintenance',     href: '/tools/maintenance' },
-  { label: 'Documents',       href: '/tools/documents' },
-  { label: 'EPC upgrade',     href: '/dashboard/epc-upgrade' },
+  { label: 'Dashboard',        href: '/dashboard' },
+  { label: 'Property report',  href: '/tools/property-report' },
+  { label: 'Niche tools',      href: '/tools' },
+  { label: 'Maintenance',      href: '/tools/maintenance' },
+  { label: 'Documents',        href: '/tools/documents' },
+  { label: 'EPC upgrade',      href: '/dashboard/epc-upgrade' },
 ]
 
 function DashNav({ user, onSignOut }: { user: User; onSignOut: () => void }) {
@@ -909,9 +1034,12 @@ export default function DashboardPage() {
             <DocumentsCard docCount={docCount} />
           </div>
 
-          {/* Quick actions */}
-          <div className="fade-up-d3">
-            <QuickActions property={property} />
+          {/* PropHealth Score + Quick actions side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 20, alignItems: 'start' }} className="pp-score-grid">
+            <PropHealthScore property={property} />
+            <div className="fade-up-d3">
+              <QuickActions property={property} />
+            </div>
           </div>
 
           {/* EPC upgrade section */}

@@ -228,6 +228,7 @@ h1, h2, h3 {
 .pp-mobile-menu button:last-child { border-bottom: none; }
 
 /* ── Grid helpers ──────────────────────────────────── */
+.pp-score-grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
 .pp-grid-3     { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .pp-grid-2     { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .pp-grid-feature { display: grid; grid-template-columns: 1fr 280px; gap: 40px; align-items: center; }
@@ -254,6 +255,7 @@ h1, h2, h3 {
   .pp-nav-desktop { display: none; }
   .pp-hamburger   { display: flex; }
 
+  .pp-score-grid         { grid-template-columns: 1fr; }
   .pp-grid-3             { grid-template-columns: 1fr; }
   .pp-grid-2             { grid-template-columns: 1fr; }
   .pp-grid-feature       { grid-template-columns: 1fr; }

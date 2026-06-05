@@ -17,6 +17,19 @@ import type { CrimeSummary } from './crime'
 import type { BroadbandCoverage } from './broadband'
 import type { PlanningSummary } from './planning'
 import type { CouncilTaxInfo } from './councilTax'
+import {
+  checkRadon,
+  checkCoalMining,
+  checkJapaneseKnotweed,
+  checkGroundRentTrap,
+  checkCladding,
+  checkMortgagePrisoner,
+  checkPermittedDevelopment,
+  type GroundRentInput,
+  type CladdingInput,
+  type MortgagePrisonerInput,
+  type PDRInput,
+} from './nicheChecks'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -738,12 +751,54 @@ export interface HomebuyerCheckInput {
   broadband:   BroadbandCoverage | null
   planning:    PlanningSummary   | null
   councilTax:  CouncilTaxInfo    | null
+  // Niche checks (optional — supply what you have)
+  groundRent?: GroundRentInput | null
+  cladding?:   CladdingInput   | null
+  mortgagePrisoner?: MortgagePrisonerInput | null
 }
 
 export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerReport {
-  const { postcode, address, cert, upgradeRecommendations, priceHistory, askingPrice, yearBuilt, comparablePropertyType, crime, broadband, planning, councilTax } = input
+  const {
+    postcode, address, cert, upgradeRecommendations, priceHistory,
+    askingPrice, yearBuilt, comparablePropertyType, crime, broadband,
+    planning, councilTax,
+    groundRent, cladding, mortgagePrisoner,
+  } = input
+
+  // Derive tenure from Land Registry records for niche checks
+  const tenure = priceHistory[0]?.estateTenure ?? 'Unknown'
+  const propertyType = comparablePropertyType ?? null
+  const isFlat = propertyType?.toLowerCase().includes('flat') ?? false
+
+  // Build PDR input from planning data
+  const pdrInput: PDRInput = {
+    propertyType,
+    yearBuilt,
+    inConservationArea: planning?.inConservationArea ?? false,
+    articleFourDirection: planning?.articleFourDirection ?? false,
+    isListedBuilding: planning?.listedBuilding ?? false,
+    isFlat,
+  }
+
+  // Default cladding input if not provided
+  const claddingInput: CladdingInput = cladding ?? {
+    propertyType,
+    yearBuilt,
+    floors: null,
+    tenure,
+  }
+
+  // Default ground rent input if not provided
+  const groundRentInput: GroundRentInput = groundRent ?? {
+    tenure,
+    groundRentPerYear: null,
+    escalationType: null,
+    doubleEveryYears: null,
+    yearBuilt,
+  }
 
   const checks: CheckResult[] = [
+    // ── Core checks ────────────────────────────────────────────────
     checkEPC(cert, upgradeRecommendations),
     checkPropertyAge(cert, yearBuilt),
     checkBoiler(cert, yearBuilt),
@@ -756,6 +811,14 @@ export function generateHomebuyerReport(input: HomebuyerCheckInput): HomebuyerRe
     checkBroadband(broadband, postcode),
     checkPlanning(planning),
     checkCouncilTax(councilTax, postcode),
+    // ── PropHealth niche checks ────────────────────────────────────
+    checkRadon(postcode),
+    checkCoalMining(postcode),
+    checkJapaneseKnotweed(postcode, propertyType),
+    checkGroundRentTrap(groundRentInput),
+    checkCladding(claddingInput),
+    checkPermittedDevelopment(pdrInput),
+    ...(mortgagePrisoner ? [checkMortgagePrisoner(mortgagePrisoner)] : []),
   ]
 
   const totalCostLow  = checks.reduce((sum, c) => sum + c.estimatedCostLow,  0)

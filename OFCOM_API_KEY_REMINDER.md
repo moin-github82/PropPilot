@@ -2,7 +2,7 @@
 
 > **Reminder posted: 25 May 2026**
 
-Your Ofcom Broadband Coverage API request should be approved today. Follow these steps to activate live broadband data in PropPilot:
+Your Ofcom Broadband Coverage API request should be approved today. Follow these steps to activate live broadband data in PropHealth:
 
 ## Steps
 
@@ -10,7 +10,7 @@ Your Ofcom Broadband Coverage API request should be approved today. Follow these
 2. Click your profile (top right) → **Profile**
 3. Under **Subscriptions**, find **"Broadband Coverage"** and click **Show** next to the Primary key
 4. Copy the key
-5. Open `D:\PropPilot\.env.local`
+5. Open `D:\PropHealth\.env.local`
 6. Replace `paste_your_primary_key_here` on this line:
    ```
    OFCOM_SUBSCRIPTION_KEY=paste_your_primary_key_here
