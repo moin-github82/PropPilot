@@ -162,7 +162,7 @@ export async function getCouncilTaxBandByUprn(uprn: number): Promise<string | nu
 
   try {
     const response = await axios.get(
-      'https://api.homedata.co.uk/api/council_tax_band/',
+      'https://api.homedata.co.uk/council_tax_band/',
       {
         params:  { uprn },
         headers: { Authorization: `Api-Key ${apiKey}` },
@@ -202,7 +202,7 @@ export async function getActualCouncilTaxBand(
     }
 
     const response = await axios.get(
-      'https://api.homedata.co.uk/api/council_tax_band/',
+      'https://api.homedata.co.uk/council_tax_band/',
       {
         params,
         headers: { Authorization: `Api-Key ${apiKey}` },

@@ -63,7 +63,7 @@ export async function GET(
   for (const pc of candidates) {
     try {
       const response = await axios.get(
-        `https://api.homedata.co.uk/api/address/postcode/${encodeURIComponent(pc)}/`,
+        `https://api.homedata.co.uk/address/postcode/${encodeURIComponent(pc)}/`,
         {
           headers: { Authorization: `Api-Key ${apiKey}` },
           timeout: 8000,
