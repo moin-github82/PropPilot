@@ -134,12 +134,14 @@ function getAuthHeader(): string {
   return `Basic ${credentials}`
 }
 
-// New API base (post-May-2026 migration)
-const EPC_BASE_NEW  = 'https://get-energy-performance-data.communities.gov.uk/api/v1'
-// Legacy API base (retired May 2026 — kept as fallback)
-const EPC_BASE_OLD  = 'https://epc.opendatacommunities.org/api/v1'
-const EPC_BASE      = hasNewEpcToken() ? EPC_BASE_NEW : EPC_BASE_OLD
-const EPC_BASE_SCO  = 'https://api.epcdata.scot/ew-compatible'
+// The API endpoint URL — same host in both old and new auth schemes.
+// The website UI at epc.opendatacommunities.org was retired May 2026,
+// but the underlying API endpoint is still active; auth changed from
+// Basic (email:key) to Bearer token (GOV.UK One Login).
+// If this 404s, check the docs at get-energy-performance-data.communities.gov.uk
+// and update EPC_API_BASE in .env.local with the correct path.
+const EPC_BASE     = process.env.EPC_API_BASE ?? 'https://epc.opendatacommunities.org/api/v1'
+const EPC_BASE_SCO = 'https://api.epcdata.scot/ew-compatible'
 
 // ─── Scottish postcode detection ─────────────────────────────────────────────
 
