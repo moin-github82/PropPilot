@@ -71,6 +71,31 @@ interface CouncilTaxResult {
   appealDeadlineNote: string
 }
 
+
+interface PlanningApplication {
+  reference:    string
+  description:  string
+  status:       string
+  decisionType: 'approved' | 'refused' | 'withdrawn' | 'pending' | 'unknown'
+  date:         string | null
+}
+
+interface PlanningResult {
+  inConservationArea:     boolean
+  conservationAreaName:   string | null
+  listedBuilding:         boolean
+  listedBuildingGrade:    string | null
+  articleFourDirection:   boolean
+  articleFourDescription: string | null
+  propertyApplications:   PlanningApplication[]
+  nearbyApplications:     PlanningApplication[]
+  applicationsFound:      number
+  lpaName:                string
+  lpaSearchUrl:           string
+  lpaApplicationsUrl:     string
+  postcode:               string
+}
+
 interface ReportData {
   address:     string
   postcode:    string
@@ -80,6 +105,7 @@ interface ReportData {
   crime:       CrimeResult   | null
   broadband:   BroadbandResult | null
   councilTax:  CouncilTaxResult | null
+  planning:    PlanningResult | null
   errors:      Record<string, string>
 }
 
@@ -91,6 +117,7 @@ interface CheckState {
   crime:      CheckStatus
   broadband:  CheckStatus
   councilTax: CheckStatus
+  planning:   CheckStatus
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -132,7 +159,7 @@ export default function PropertyReportPage() {
   const [address,        setAddress]        = useState('')
   const [postcode,       setPostcode]       = useState('')
   const [report,         setReport]         = useState<ReportData | null>(null)
-  const [checkState,     setCheckState]     = useState<CheckState>({ flood: 'idle', epc: 'idle', crime: 'idle', broadband: 'idle', councilTax: 'idle' })
+  const [checkState,     setCheckState]     = useState<CheckState>({ flood: 'idle', epc: 'idle', crime: 'idle', broadband: 'idle', councilTax: 'idle', planning: 'idle' })
   const [running,        setRunning]        = useState(false)
   // Address picker
   const [addressOptions, setAddressOptions] = useState<{ uprn: number; address: string }[]>([])
@@ -180,7 +207,7 @@ export default function PropertyReportPage() {
 
     setRunning(true)
     setReport(null)
-    setCheckState({ flood: 'loading', epc: 'loading', crime: 'loading', broadband: 'loading', councilTax: 'loading' })
+    setCheckState({ flood: 'loading', epc: 'loading', crime: 'loading', broadband: 'loading', councilTax: 'loading', planning: 'loading' })
 
     const errors: Record<string, string> = {}
     const encoded = encodeURIComponent(pc)
@@ -204,12 +231,13 @@ export default function PropertyReportPage() {
       }
     }
 
-    const [flood, epcRaw, crime, broadband, councilTax] = await Promise.all([
+    const [flood, epcRaw, crime, broadband, councilTax, planning] = await Promise.all([
       fetchCheck<FloodResult>('flood',      `/api/flood-risk/${encoded}`),
       fetchCheck<EpcResult>  ('epc',        `/api/epc/${encoded}${addrQ}`),
       fetchCheck<CrimeResult>('crime',      `/api/crime/${encoded}`),
       fetchCheck<BroadbandResult>('broadband',  `/api/broadband/${encoded}`),
       fetchCheck<CouncilTaxResult>('councilTax', selectedUprn ? `/api/council-tax/${encoded}?uprn=${selectedUprn}` : `/api/council-tax/${encoded}${addrQ}`),
+      fetchCheck<PlanningResult>('planning', `/api/planning/${encoded}`),
     ])
 
     // Broadband returns 503 with configured:false — treat as partial data
@@ -224,6 +252,7 @@ export default function PropertyReportPage() {
       crime,
       broadband:   broadbandData,
       councilTax,
+      planning,
       errors,
     })
 
@@ -248,6 +277,7 @@ export default function PropertyReportPage() {
     crime:      '🚨 Crime statistics',
     broadband:  '📡 Broadband & mobile',
     councilTax: '🏛️ Council tax',
+    planning:   '🏗️ Planning applications',
   }
 
   return (
@@ -469,6 +499,24 @@ export default function PropertyReportPage() {
                     )}
                   </div>
                 )}
+                {/* Planning */}
+                {report.planning && (() => {
+                  const hasRestriction = report.planning.listedBuilding || report.planning.inConservationArea || report.planning.articleFourDirection
+                  const color = report.planning.listedBuilding ? '#9f1239' : hasRestriction ? '#451a03' : '#14532d'
+                  const bg    = report.planning.listedBuilding ? '#fff1f2' : hasRestriction ? '#fffbeb' : '#f0fdf4'
+                  const label = report.planning.listedBuilding
+                    ? `Listed Bldg — Grade ${report.planning.listedBuildingGrade ?? 'II'}`
+                    : report.planning.inConservationArea ? 'Conservation area'
+                    : report.planning.articleFourDirection ? 'Article 4 Direction'
+                    : 'No restrictions'
+                  return (
+                    <div style={{ background: bg, border: `1px solid ${color}40`, borderRadius: 10, padding: '12px 14px' }}>
+                      <p style={{ fontSize: 11, color: '#5e5a52', margin: '0 0 4px', fontWeight: 500 }}>🏗️ Planning</p>
+                      <p style={{ fontSize: 12, fontWeight: 700, color, margin: '0 0 2px' }}>{label}</p>
+                      <p style={{ fontSize: 11, color: '#5e5a52', margin: 0 }}>{report.planning.applicationsFound} app{report.planning.applicationsFound !== 1 ? 's' : ''} nearby</p>
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* ── 1. Flood Risk ── */}
@@ -797,6 +845,132 @@ export default function PropertyReportPage() {
                   ]} />
                 </div>
               )}
+
+              {/* ── 6. Planning Applications ── */}
+              {report.planning && (() => {
+                const p = report.planning
+                const hasRestriction = p.listedBuilding || p.inConservationArea || p.articleFourDirection
+                const restrictionColor = p.listedBuilding ? '#9f1239' : hasRestriction ? '#451a03' : '#14532d'
+                const restrictionBg    = p.listedBuilding ? '#fff1f2' : hasRestriction ? '#fffbeb' : '#f0fdf4'
+                const restrictionBorder = p.listedBuilding ? '#fda4af' : hasRestriction ? '#fcd34d' : '#86efac'
+
+                const DECISION_STYLES: Record<string, { color: string; bg: string; label: string }> = {
+                  approved:  { color: '#14532d', bg: '#f0fdf4', label: 'Approved' },
+                  refused:   { color: '#9f1239', bg: '#fff1f2', label: 'Refused'  },
+                  withdrawn: { color: '#451a03', bg: '#fffbeb', label: 'Withdrawn'},
+                  pending:   { color: '#1e40af', bg: '#eff6ff', label: 'Pending'  },
+                  unknown:   { color: '#5e5a52', bg: '#f8f7f4', label: 'Unknown'  },
+                }
+
+                return (
+                  <div style={card} className="print-card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                      <span style={{ fontSize: 24 }}>🏗️</span>
+                      <h3 style={sectionHead}>Planning Applications</h3>
+                    </div>
+
+                    {/* Restrictions banner */}
+                    <div style={{ background: restrictionBg, border: `1px solid ${restrictionBorder}`, borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                      {p.listedBuilding && (
+                        <p style={{ fontSize: 14, fontWeight: 600, color: restrictionColor, margin: '0 0 4px' }}>
+                          ⚠ Grade {p.listedBuildingGrade ?? 'II'} Listed Building — all alterations require Listed Building Consent
+                        </p>
+                      )}
+                      {p.inConservationArea && (
+                        <p style={{ fontSize: 14, fontWeight: 600, color: restrictionColor, margin: '0 0 4px' }}>
+                          {p.listedBuilding ? '+ ' : '⚠ '}Conservation area{p.conservationAreaName ? ` — ${p.conservationAreaName}` : ''}
+                        </p>
+                      )}
+                      {p.articleFourDirection && (
+                        <p style={{ fontSize: 14, fontWeight: 600, color: restrictionColor, margin: '0 0 4px' }}>
+                          {(p.listedBuilding || p.inConservationArea) ? '+ ' : '⚠ '}Article 4 Direction — permitted development rights removed
+                          {p.articleFourDescription ? `: ${p.articleFourDescription}` : ''}
+                        </p>
+                      )}
+                      {!hasRestriction && (
+                        <p style={{ fontSize: 14, fontWeight: 600, color: restrictionColor, margin: 0 }}>
+                          ✓ No conservation area, listed building, or Article 4 Direction
+                        </p>
+                      )}
+                      <p style={{ fontSize: 12, color: restrictionColor, margin: hasRestriction ? '6px 0 0' : '0', opacity: 0.8 }}>
+                        Local planning authority: {p.lpaName}
+                      </p>
+                    </div>
+
+                    {/* Applications on this property */}
+                    {p.propertyApplications.length > 0 && (
+                      <div style={{ marginBottom: 16 }}>
+                        <p style={{ fontSize: 11, fontWeight: 600, color: '#9e998f', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 10px' }}>
+                          Applications on this property (last 5 years)
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {p.propertyApplications.map((app, i) => {
+                            const ds = DECISION_STYLES[app.decisionType]
+                            return (
+                              <div key={i} style={{ background: '#f8f7f4', border: '1px solid #e2ddd6', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, background: ds.bg, color: ds.color, border: `1px solid ${ds.color}40`, borderRadius: 20, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0, marginTop: 1 }}>
+                                  {ds.label}
+                                </span>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ fontSize: 13, color: '#1a1917', margin: '0 0 2px', lineHeight: 1.5 }}>{app.description}</p>
+                                  <p style={{ fontSize: 11, color: '#9e998f', margin: 0 }}>
+                                    Ref: {app.reference}{app.date ? ` · ${app.date}` : ''}
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nearby applications */}
+                    {p.nearbyApplications.length > 0 && (
+                      <div style={{ marginBottom: 16 }}>
+                        <p style={{ fontSize: 11, fontWeight: 600, color: '#9e998f', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 10px' }}>
+                          Nearby applications within 500 m (last 5 years)
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {p.nearbyApplications.map((app, i) => {
+                            const ds = DECISION_STYLES[app.decisionType]
+                            return (
+                              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '6px 0', borderBottom: i < p.nearbyApplications.length - 1 ? '1px solid #f0ede8' : 'none' }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, background: ds.bg, color: ds.color, border: `1px solid ${ds.color}40`, borderRadius: 20, padding: '1px 7px', whiteSpace: 'nowrap', flexShrink: 0, marginTop: 1 }}>
+                                  {ds.label}
+                                </span>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ fontSize: 12, color: '#1a1917', margin: '0 0 1px', lineHeight: 1.5 }}>{app.description.slice(0, 120)}{app.description.length > 120 ? '…' : ''}</p>
+                                  <p style={{ fontSize: 11, color: '#9e998f', margin: 0 }}>
+                                    {app.date ? app.date : 'Date unknown'}
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {p.applicationsFound === 0 && (
+                      <p style={{ fontSize: 13, color: '#5e5a52', margin: '0 0 14px', lineHeight: 1.6 }}>
+                        No planning applications found via the national dataset for this location. Coverage is limited to councils in the Open Digital Planning pilot (~30 LPAs) — verify directly on the {p.lpaName} portal.
+                      </p>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <a href={p.lpaApplicationsUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#1D9E75', textDecoration: 'none', fontWeight: 500 }}>
+                        → View on {p.lpaName} planning portal ↗
+                      </a>
+                    </div>
+
+                    <ChecklistItems items={[
+                      { text: 'Check for conservation area or listed building restrictions', done: true },
+                      { text: 'Review any refused or pending applications on this property', done: p.propertyApplications.filter(a => a.decisionType === 'refused' || a.decisionType === 'pending').length === 0 },
+                      { text: 'Check nearby development applications', done: p.nearbyApplications.length === 0 },
+                    ]} />
+                  </div>
+                )
+              })()}
 
               {/* ── Premium Professional Services ── */}
               <PremiumServices postcode={report.postcode} address={report.address} />
