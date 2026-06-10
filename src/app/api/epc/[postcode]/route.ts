@@ -1,11 +1,14 @@
 /**
- * GET /api/epc/[postcode]?address=...
+ * GET /api/epc/[postcode]?address=...&uprn=...
  *
- * Standalone EPC lookup by postcode + optional address.
+ * EPC lookup by postcode + optional address/UPRN.
+ *
+ * Data sources (tried in order):
+ *   1. Homedata /epc-checker/{uprn}/ — when ?uprn= is provided and HOMEDATA_API_KEY is set
+ *   2. New EPC government API — when EPC_BEARER_TOKEN is configured
+ *   3. Migration message — when neither is available
  *
  * NOTE: The old epc.opendatacommunities.org API was retired on 30 May 2026.
- * Register at: https://get-energy-performance-data.communities.gov.uk
- * Then add EPC_BEARER_TOKEN=<your_token> to .env.local.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -24,6 +27,71 @@ const MIGRATION_NOTE =
   'To restore EPC lookups, register at https://get-energy-performance-data.communities.gov.uk ' +
   '(GOV.UK One Login required), then add EPC_BEARER_TOKEN=<token> to your .env.local file.'
 
+/** Maps an EPC efficiency score (1–100) to a band letter A–G. */
+function scoreToBand(score: number): string {
+  if (score >= 92) return 'A'
+  if (score >= 81) return 'B'
+  if (score >= 69) return 'C'
+  if (score >= 55) return 'D'
+  if (score >= 39) return 'E'
+  if (score >= 21) return 'F'
+  return 'G'
+}
+
+/**
+ * Fetch EPC data from Homedata /epc-checker/{uprn}/ and return in our
+ * standard EpcResult shape. Returns null if the key is missing or call fails.
+ */
+async function getEpcFromHomedata(uprn: number, address: string) {
+  const apiKey = process.env.HOMEDATA_API_KEY
+  if (!apiKey || apiKey === 'your_homedata_api_key_here') return null
+
+  try {
+    const res = await fetch(
+      `https://api.homedata.co.uk/epc-checker/${uprn}/`,
+      {
+        headers: { Authorization: `Api-Key ${apiKey}` },
+        signal: AbortSignal.timeout(8000),
+      }
+    )
+    if (!res.ok) return null
+    const d = await res.json()
+
+    const currentScore   = typeof d.current_energy_efficiency   === 'number' ? d.current_energy_efficiency   : null
+    const potentialScore = typeof d.potential_energy_efficiency === 'number' ? d.potential_energy_efficiency : null
+    if (currentScore === null) return null
+
+    const currentBand   = scoreToBand(currentScore)
+    const potentialBand = potentialScore !== null ? scoreToBand(potentialScore) : currentBand
+
+    const lodgementDate: string = d.last_epc_date ?? ''
+    const yearsOld = lodgementDate
+      ? Math.floor((Date.now() - new Date(lodgementDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+      : 0
+
+    return {
+      found: true,
+      source: 'homedata',
+      certificate: {
+        address,
+        currentBand,
+        potentialBand,
+        currentScore,
+        potentialScore: potentialScore ?? currentScore,
+        propertyType:   d.construction_age_band ? `Built ${d.construction_age_band}` : 'Residential',
+        lodgementDate,
+        totalFloorArea: d.epc_floor_area ?? null,
+        mainFuel:       'See full EPC certificate',
+        yearsOld,
+        isStale:        yearsOld > 10,
+      },
+      upgradeRecommendations: [],
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ postcode: string }> }
@@ -31,12 +99,23 @@ export async function GET(
   const { postcode: rawPostcode } = await params
   const postcode = decodeURIComponent(rawPostcode).replace(/\s/g, '').toUpperCase()
   const address  = req.nextUrl.searchParams.get('address') ?? ''
+  const uprnStr  = req.nextUrl.searchParams.get('uprn') ?? ''
+  const uprn     = uprnStr ? parseInt(uprnStr, 10) : null
 
   if (!postcode || postcode.length < 5) {
     return NextResponse.json(
       { error: 'Valid UK postcode required (e.g. SW1A2AA or SW1A+2AA)' },
       { status: 400 }
     )
+  }
+
+  // ── Fast path: Homedata EPC (when UPRN is provided + API key is configured) ──
+  if (uprn && !isNaN(uprn)) {
+    const homedataResult = await getEpcFromHomedata(uprn, address || `UPRN ${uprn}`)
+    if (homedataResult) {
+      return NextResponse.json(homedataResult)
+    }
+    // Homedata failed (bad key / not found) — fall through to government API
   }
 
   // For Scottish postcodes, require the Scotland key

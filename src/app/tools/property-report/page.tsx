@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { SiteNav } from '../../components/SiteNav'
 import { Footer } from '../../components/Footer'
@@ -161,45 +161,73 @@ export default function PropertyReportPage() {
   const [report,         setReport]         = useState<ReportData | null>(null)
   const [checkState,     setCheckState]     = useState<CheckState>({ flood: 'idle', epc: 'idle', crime: 'idle', broadband: 'idle', councilTax: 'idle', planning: 'idle' })
   const [running,        setRunning]        = useState(false)
-  // Address picker
-  const [addressOptions, setAddressOptions] = useState<{ uprn: number; address: string }[]>([])
-  const [selectedUprn,   setSelectedUprn]   = useState<number | null>(null)
-  const [loadingAddresses,  setLoadingAddresses]  = useState(false)
-  const [addressLookupDone, setAddressLookupDone] = useState(false)
-  const [addressLookupError, setAddressLookupError] = useState('')
+  // Address autocomplete
+  const [searchQuery,      setSearchQuery]      = useState('')
+  const [suggestions,      setSuggestions]      = useState<{ uprn: number; address: string; postcode: string; town: string }[]>([])
+  const [selectedUprn,     setSelectedUprn]     = useState<number | null>(null)
+  const [searchLoading,    setSearchLoading]    = useState(false)
+  const [showSuggestions,  setShowSuggestions]  = useState(false)
+  const [searchError,      setSearchError]      = useState('')
+  const [confirmed,        setConfirmed]        = useState(false)
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const searchAddresses = useCallback(async (q: string) => {
+    if (q.trim().length < 3) { setSuggestions([]); setShowSuggestions(false); return }
+    setSearchLoading(true)
+    setSearchError('')
+    try {
+      const res = await fetch(`/api/address-search?q=${encodeURIComponent(q.trim())}`)
+      const data = await res.json()
+      if (res.ok && Array.isArray(data.suggestions)) {
+        setSuggestions(data.suggestions)
+        setShowSuggestions(data.suggestions.length > 0)
+      } else {
+        setSearchError(data.error ?? 'Search failed')
+        setSuggestions([])
+        setShowSuggestions(false)
+      }
+    } catch (e) {
+      setSearchError(e instanceof Error ? e.message : 'Network error')
+    }
+    setSearchLoading(false)
+  }, [])
+
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value)
+    setConfirmed(false)
+    setSelectedUprn(null)
+    setAddress('')
+    setPostcode('')
+    if (searchDebounce.current) clearTimeout(searchDebounce.current)
+    searchDebounce.current = setTimeout(() => searchAddresses(value), 300)
+  }
+
+  const selectSuggestion = (s: { uprn: number; address: string; postcode: string; town: string }) => {
+    const fullAddress = s.town ? `${s.address}, ${s.town}` : s.address
+    setSearchQuery(`${s.address}, ${s.postcode}`)
+    setAddress(fullAddress)
+    setPostcode(s.postcode)
+    setSelectedUprn(s.uprn)
+    setSuggestions([])
+    setShowSuggestions(false)
+    setConfirmed(true)
+  }
 
   const setCheck = (key: keyof CheckState, status: CheckStatus) =>
     setCheckState(prev => ({ ...prev, [key]: status }))
-
-  const fetchAddresses = async (pc: string) => {
-    const clean = pc.trim().replace(/\s+/g, '').toUpperCase()
-    if (clean.length < 5) return
-    setLoadingAddresses(true)
-    setAddressLookupDone(false)
-    setAddressOptions([])
-    setSelectedUprn(null)
-    setAddress('')
-    setAddressLookupError('')
-    try {
-      const res = await fetch(`/api/address-lookup/${encodeURIComponent(clean)}`)
-      const data = await res.json()
-      if (res.ok && Array.isArray(data)) {
-        if (data.length > 0) {
-          setAddressOptions(data)
-        } else {
-          setAddressLookupError('No addresses found for this postcode.')
-        }
-      } else {
-        const msg = data?.error ?? `HTTP ${res.status}`
-        setAddressLookupError(msg)
-      }
-    } catch (e) {
-      setAddressLookupError(e instanceof Error ? e.message : 'Network error')
-    }
-    setLoadingAddresses(false)
-    setAddressLookupDone(true)
-  }
 
   const runReport = async () => {
     const pc = postcode.trim().replace(/\s+/g, ' ').toUpperCase()
@@ -212,6 +240,10 @@ export default function PropertyReportPage() {
     const errors: Record<string, string> = {}
     const encoded = encodeURIComponent(pc)
     const addrQ   = address.trim() ? `?address=${encodeURIComponent(address.trim())}` : ''
+    const epcParams = new URLSearchParams()
+    if (address.trim()) epcParams.set('address', address.trim())
+    if (selectedUprn) epcParams.set('uprn', String(selectedUprn))
+    const epcQ = epcParams.toString() ? `?${epcParams.toString()}` : ''
 
     const fetchCheck = async <T,>(key: keyof CheckState, url: string): Promise<T | null> => {
       try {
@@ -233,7 +265,7 @@ export default function PropertyReportPage() {
 
     const [flood, epcRaw, crime, broadband, councilTax, planning] = await Promise.all([
       fetchCheck<FloodResult>('flood',      `/api/flood-risk/${encoded}`),
-      fetchCheck<EpcResult>  ('epc',        `/api/epc/${encoded}${addrQ}`),
+      fetchCheck<EpcResult>  ('epc',        `/api/epc/${encoded}${epcQ}`),
       fetchCheck<CrimeResult>('crime',      `/api/crime/${encoded}`),
       fetchCheck<BroadbandResult>('broadband',  `/api/broadband/${encoded}`),
       fetchCheck<CouncilTaxResult>('councilTax', selectedUprn ? `/api/council-tax/${encoded}?uprn=${selectedUprn}` : `/api/council-tax/${encoded}${addrQ}`),
@@ -310,93 +342,106 @@ export default function PropertyReportPage() {
           {/* Input form */}
           <div style={{ ...card, border: '1px solid #1D9E75' }} className="no-print">
 
-            {/* Row 1: Postcode + Find addresses */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={labelStyle}>Postcode *</label>
+            {/* Address autocomplete search */}
+            <div style={{ marginBottom: 14 }} ref={searchRef}>
+              <label style={labelStyle}>Search by address or postcode</label>
+              <div style={{ position: 'relative' }}>
                 <input
-                  value={postcode}
-                  onChange={e => {
-                    setPostcode(e.target.value)
-                    setAddressOptions([])
-                    setSelectedUprn(null)
-                    setAddress('')
-                    setAddressLookupDone(false)
-                  }}
-                  placeholder="e.g. SW1A 1AA"
-                  style={inputStyle}
-                  onKeyDown={e => e.key === 'Enter' && fetchAddresses(postcode)}
+                  value={searchQuery}
+                  onChange={e => handleSearchInput(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  placeholder="e.g. 14 High Street, Leeds or LS1 4BR"
+                  style={{ ...inputStyle, paddingRight: 40 }}
+                  autoComplete="off"
                 />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => fetchAddresses(postcode)}
-                  disabled={loadingAddresses || postcode.trim().length < 5}
-                  style={{
-                    height: 48, padding: '0 18px', fontSize: 14, fontWeight: 500,
-                    background: '#1a1917', color: '#fff', border: 'none', borderRadius: 10,
-                    cursor: loadingAddresses || postcode.trim().length < 5 ? 'default' : 'pointer',
-                    fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
-                    opacity: postcode.trim().length < 5 ? 0.45 : 1,
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  {loadingAddresses ? '⏳ Looking up…' : '🔍 Find addresses'}
-                </button>
-              </div>
-            </div>
+                {searchLoading && (
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16 }}>⏳</span>
+                )}
+                {confirmed && !searchLoading && (
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#1D9E75' }}>✓</span>
+                )}
 
-            {/* Row 2: Address dropdown (shown after lookup) */}
-            {addressOptions.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>
-                  Select your address (improves EPC match{isScottishPc(postcode) ? '' : ' & gets exact council tax band'})
-                </label>
-                <select
-                  value={selectedUprn ?? ''}
-                  onChange={e => {
-                    const uprn = Number(e.target.value)
-                    const opt  = addressOptions.find(o => o.uprn === uprn)
-                    if (opt) { setSelectedUprn(opt.uprn); setAddress(opt.address) }
-                    else     { setSelectedUprn(null);      setAddress('')          }
-                  }}
-                  style={{ ...inputStyle, cursor: 'pointer', paddingRight: 32 }}
-                >
-                  <option value="">— Select an address —</option>
-                  {addressOptions.map(opt => (
-                    <option key={opt.uprn} value={opt.uprn}>{opt.address}</option>
-                  ))}
-                </select>
-                {selectedUprn && (
-                  <p style={{ fontSize: 11, color: '#1D9E75', margin: '6px 0 0', fontWeight: 500 }}>
-                    {isScottishPc(postcode)
-                      ? '✓ Address selected — improves EPC matching accuracy'
-                      : '✓ Address selected — council tax band will be looked up from VOA'}
-                  </p>
+                {/* Suggestions dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+                    background: '#fff', border: '1.5px solid #1D9E75', borderTop: 'none',
+                    borderRadius: '0 0 10px 10px', maxHeight: 260, overflowY: 'auto',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                  }}>
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={s.uprn}
+                        onMouseDown={() => selectSuggestion(s)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '10px 14px', fontSize: 13, color: '#1a1917',
+                          background: 'transparent', border: 'none',
+                          borderBottom: i < suggestions.length - 1 ? '1px solid #f0ede8' : 'none',
+                          cursor: 'pointer', fontFamily: 'var(--font-body)',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#f8f7f4')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <span style={{ fontWeight: 500 }}>{s.address}</span>
+                        {s.town && <span style={{ color: '#9e998f' }}>, {s.town}</span>}
+                        <span style={{ color: '#1D9E75', marginLeft: 8, fontSize: 12 }}>{s.postcode}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            )}
 
-            {/* Address lookup error / no results */}
-            {addressLookupDone && addressOptions.length === 0 && !loadingAddresses && addressLookupError && (
-              <div style={{ marginBottom: 12, background: '#fff1f2', border: '1px solid #fda4af', borderRadius: 8, padding: '10px 14px' }}>
-                <p style={{ fontSize: 12, fontWeight: 500, color: '#9f1239', margin: '0 0 4px' }}>Address lookup failed</p>
-                <p style={{ fontSize: 12, color: '#9f1239', margin: '0 0 6px', fontFamily: 'monospace' }}>{addressLookupError}</p>
-                <p style={{ fontSize: 11, color: '#9f1239', margin: 0 }}>
-                  {addressLookupError.toLowerCase().includes('not configured') || addressLookupError.includes('503')
-                    ? <>Set <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>HOMEDATA_API_KEY</code> in <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>.env.local</code> — free key at <a href="https://homedata.co.uk/register" target="_blank" rel="noreferrer" style={{color:'#9f1239'}}>homedata.co.uk/register</a></>
-                    : addressLookupError.includes('401') || addressLookupError.toLowerCase().includes('unauthori')
-                    ? <>API key is invalid — check <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>HOMEDATA_API_KEY</code> in <code style={{background:'#ffe4e6',padding:'0 3px',borderRadius:3}}>.env.local</code></>
-                    : 'You can still run the report — council tax will show regional estimates.'
-                  }
+              {/* Search error */}
+              {searchError && (
+                <p style={{ fontSize: 11, color: '#9f1239', margin: '5px 0 0' }}>
+                  {searchError.includes('503') || searchError.toLowerCase().includes('not configured')
+                    ? <>Address search requires a valid <code>HOMEDATA_API_KEY</code> — get a free key at <a href="https://homedata.co.uk/register" target="_blank" rel="noreferrer" style={{color:'#9f1239'}}>homedata.co.uk/register</a></>
+                    : `Search error: ${searchError}`}
                 </p>
-              </div>
-            )}
+              )}
+
+              {/* Confirmed selection chip */}
+              {confirmed && postcode && (
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#14532d', borderRadius: 20, padding: '3px 10px', fontWeight: 500 }}>
+                    ✓ {postcode}
+                  </span>
+                  {selectedUprn && (
+                    <span style={{ fontSize: 11, color: '#9e998f' }}>
+                      UPRN {selectedUprn} · EPC &amp; council tax will use exact property data
+                    </span>
+                  )}
+                  <button
+                    onClick={() => { setSearchQuery(''); setAddress(''); setPostcode(''); setSelectedUprn(null); setConfirmed(false); setSuggestions([]); }}
+                    style={{ fontSize: 11, color: '#9e998f', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
+
+              {/* Manual postcode fallback */}
+              {!confirmed && (
+                <p style={{ fontSize: 11, color: '#9e998f', margin: '6px 0 0' }}>
+                  Can&apos;t find your address?{' '}
+                  <button
+                    onClick={() => {
+                      const pc = searchQuery.replace(/\s/g, '').toUpperCase()
+                      if (pc.length >= 5) { setPostcode(pc); setConfirmed(true) }
+                    }}
+                    style={{ fontSize: 11, color: '#1D9E75', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontFamily: 'var(--font-body)' }}
+                  >
+                    Use postcode only
+                  </button>
+                </p>
+              )}
+            </div>
 
             <button
               onClick={runReport}
               disabled={running || !postcode.trim()}
-              style={{ width: '100%', height: 48, fontSize: 15, fontWeight: 500, background: running ? '#9e998f' : '#1D9E75', color: '#fff', border: 'none', borderRadius: 10, cursor: running ? 'default' : 'pointer', fontFamily: 'var(--font-body)', transition: 'background 0.2s' }}
+              style={{ width: '100%', height: 48, fontSize: 15, fontWeight: 500, background: running ? '#9e998f' : (!postcode.trim() ? '#b5b0a7' : '#1D9E75'), color: '#fff', border: 'none', borderRadius: 10, cursor: (running || !postcode.trim()) ? 'default' : 'pointer', fontFamily: 'var(--font-body)', transition: 'background 0.2s' }}
             >
               {running ? 'Running checks…' : '▶ Generate property report'}
             </button>
