@@ -41,7 +41,7 @@ export async function GET(
           message: 'Scottish EPC data requires a separate API key from epcdata.scot (free). Add EPC_SCOTLAND_API_KEY to your .env.local file.',
           setupUrl: 'https://epcdata.scot/api-key',
         },
-        { status: 200 }   // return 200 so the UI shows the message rather than an error
+        { status: 200 }
       )
     }
   }
@@ -50,17 +50,15 @@ export async function GET(
   if (!isScotland && (!process.env.EPC_API_EMAIL || !process.env.EPC_API_KEY)) {
     return NextResponse.json(
       {
-        error: 'EPC API not configured',
-        hint: 'Add EPC_API_EMAIL and EPC_API_KEY to your .env.local file. Register free at epc.opendatacommunities.org',
+        found: false,
+        message: 'EPC API not configured. Add EPC_API_EMAIL and EPC_API_KEY to your .env.local file. Register free at epc.opendatacommunities.org',
       },
-      { status: 503 }
+      { status: 200 }
     )
   }
 
   try {
     // Fetch all certificates for this postcode (cached 7 days).
-    // Scotland uses a separate cache namespace so that stale E&W empty-result
-    // entries (from before the Scotland key was configured) are never served.
     const cacheKey = isScotland
       ? `SCO:${CacheKey.epcPostcode(postcode)}`
       : CacheKey.epcPostcode(postcode)
@@ -120,7 +118,7 @@ export async function GET(
       })
     }
 
-    // No address — return all certificates in this postcode
+    // No address -- return all certificates in this postcode
     return NextResponse.json({
       found: true,
       postcode,
@@ -135,33 +133,51 @@ export async function GET(
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    const isAuthError = message.includes('401') || message.includes('403') || message.includes('Unauthorized')
+    const isAuthError    = message.includes('401') || message.includes('403') || message.includes('Unauthorized')
     const isNetworkError = message.includes('ENOTFOUND') || message.includes('ECONNREFUSED')
+    const isTimeout      = message.includes('ETIMEDOUT') || message.includes('timeout') || message.includes('ECONNRESET')
 
     console.error('[EPC API Error]', message)
 
     if (isAuthError) {
       return NextResponse.json(
         {
+          found: false,
           error: 'EPC API authentication failed',
-          hint: isScotland
-            ? 'Check EPC_SCOTLAND_API_KEY in .env.local. Re-copy the full key from your epcdata.scot dashboard.'
-            : 'Check EPC_API_EMAIL and EPC_API_KEY in .env.local. Make sure there are no spaces around the values.',
+          message: isScotland
+            ? 'Scottish EPC API key rejected -- check EPC_SCOTLAND_API_KEY in .env.local.'
+            : 'EPC API credentials rejected -- check EPC_API_EMAIL and EPC_API_KEY in .env.local.',
         },
-        { status: 401 }
+        { status: 200 }
+      )
+    }
+
+    if (isTimeout) {
+      return NextResponse.json(
+        {
+          found: false,
+          message: 'EPC Register API timed out. The service may be temporarily slow -- try again in a moment.',
+        },
+        { status: 200 }
       )
     }
 
     if (isNetworkError) {
       return NextResponse.json(
-        { error: 'Could not reach the EPC Register API. Check your internet connection.' },
-        { status: 503 }
+        {
+          found: false,
+          message: 'Could not reach the EPC Register API. Check your internet connection.',
+        },
+        { status: 200 }
       )
     }
 
     return NextResponse.json(
-      { error: 'EPC lookup failed', details: message },
-      { status: 500 }
+      {
+        found: false,
+        message: `EPC lookup failed: ${message}`,
+      },
+      { status: 200 }
     )
   }
 }

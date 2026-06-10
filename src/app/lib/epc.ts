@@ -193,6 +193,7 @@ export async function searchByPostcode(postcode: string): Promise<EPCCertificate
       'page-size': 10,
       from: 0,
     },
+    timeout: 12000,
   })
   return response.data?.rows ?? []
 }
@@ -206,6 +207,7 @@ export async function getCertificateByLmkKey(lmkKey: string): Promise<EPCCertifi
       Authorization: getAuthHeader(),
       Accept: 'application/json',
     },
+    timeout: 12000,
   })
   return response.data?.rows?.[0] ?? null
 }
