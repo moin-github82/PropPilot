@@ -100,18 +100,46 @@ export interface EPCResult {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+/**
+ * The old epc.opendatacommunities.org API was retired on 30 May 2026.
+ * The new service is at get-energy-performance-data.communities.gov.uk and uses
+ * Bearer token auth obtained via GOV.UK One Login.
+ *
+ * Migration steps:
+ *  1. Go to https://get-energy-performance-data.communities.gov.uk
+ *  2. Sign in / register with GOV.UK One Login
+ *  3. Copy your Bearer token from your account page
+ *  4. Add  EPC_BEARER_TOKEN=<token>  to .env.local
+ *
+ * The old EPC_API_EMAIL + EPC_API_KEY are no longer used for E&W lookups.
+ */
+
+/** Returns true if the new-service Bearer token is configured. */
+export function hasNewEpcToken(): boolean {
+  return !!(process.env.EPC_BEARER_TOKEN && process.env.EPC_BEARER_TOKEN.length > 8)
+}
+
 function getAuthHeader(): string {
+  // New service (post-retirement): Bearer token from GOV.UK One Login
+  if (hasNewEpcToken()) {
+    return `Bearer ${process.env.EPC_BEARER_TOKEN}`
+  }
+  // Legacy: Basic Auth with email + API key (retired May 2026, kept for reference)
   const email  = process.env.EPC_API_EMAIL
   const apiKey = process.env.EPC_API_KEY
   if (!email || !apiKey) {
-    throw new Error('EPC_API_EMAIL and EPC_API_KEY must be set in environment variables.')
+    throw new Error('EPC not configured. Add EPC_BEARER_TOKEN to .env.local (register at get-energy-performance-data.communities.gov.uk).')
   }
   const credentials = Buffer.from(`${email}:${apiKey}`).toString('base64')
   return `Basic ${credentials}`
 }
 
-const EPC_BASE    = 'https://epc.opendatacommunities.org/api/v1'
-const EPC_BASE_SCO = 'https://api.epcdata.scot/ew-compatible'
+// New API base (post-May-2026 migration)
+const EPC_BASE_NEW  = 'https://get-energy-performance-data.communities.gov.uk/api/v1'
+// Legacy API base (retired May 2026 — kept as fallback)
+const EPC_BASE_OLD  = 'https://epc.opendatacommunities.org/api/v1'
+const EPC_BASE      = hasNewEpcToken() ? EPC_BASE_NEW : EPC_BASE_OLD
+const EPC_BASE_SCO  = 'https://api.epcdata.scot/ew-compatible'
 
 // ─── Scottish postcode detection ─────────────────────────────────────────────
 

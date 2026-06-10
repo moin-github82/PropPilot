@@ -2,6 +2,10 @@
  * GET /api/epc/[postcode]?address=...
  *
  * Standalone EPC lookup by postcode + optional address.
+ *
+ * NOTE: The old epc.opendatacommunities.org API was retired on 30 May 2026.
+ * Register at: https://get-energy-performance-data.communities.gov.uk
+ * Then add EPC_BEARER_TOKEN=<your_token> to .env.local.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -11,8 +15,14 @@ import {
   findBestAddressMatch,
   getUpgradeRecommendations,
   getCertificateAgeYears,
+  hasNewEpcToken,
 } from '../../../lib/epc'
 import { withCache, CacheKey, TTL } from '../../../lib/cache'
+
+const MIGRATION_NOTE =
+  'The EPC Open Data API was retired on 30 May 2026. ' +
+  'To restore EPC lookups, register at https://get-energy-performance-data.communities.gov.uk ' +
+  '(GOV.UK One Login required), then add EPC_BEARER_TOKEN=<token> to your .env.local file.'
 
 export async function GET(
   req: NextRequest,
@@ -46,19 +56,25 @@ export async function GET(
     }
   }
 
-  // Check E&W EPC API credentials (not needed for Scotland)
-  if (!isScotland && (!process.env.EPC_API_EMAIL || !process.env.EPC_API_KEY)) {
+  // Check E&W EPC credentials (not needed for Scotland)
+  if (!isScotland && !hasNewEpcToken()) {
+    const hasOldCreds = !!(process.env.EPC_API_EMAIL && process.env.EPC_API_KEY)
     return NextResponse.json(
       {
         found: false,
-        message: 'EPC API not configured. Add EPC_API_EMAIL and EPC_API_KEY to your .env.local file. Register free at epc.opendatacommunities.org',
+        apiRetired: true,
+        message: hasOldCreds
+          ? 'EPC API migration required: the old epc.opendatacommunities.org service was retired on 30 May 2026. ' +
+            'Register at https://get-energy-performance-data.communities.gov.uk (GOV.UK One Login), ' +
+            'get your Bearer token, and add EPC_BEARER_TOKEN=<token> to .env.local.'
+          : 'EPC API not configured. Register at https://get-energy-performance-data.communities.gov.uk ' +
+            '(GOV.UK One Login required) and add EPC_BEARER_TOKEN=<token> to .env.local.',
       },
       { status: 200 }
     )
   }
 
   try {
-    // Fetch all certificates for this postcode (cached 7 days).
     const cacheKey = isScotland
       ? `SCO:${CacheKey.epcPostcode(postcode)}`
       : CacheKey.epcPostcode(postcode)
@@ -78,7 +94,6 @@ export async function GET(
       })
     }
 
-    // If address provided, find best match
     if (address) {
       const match = findBestAddressMatch(address, records)
       if (!match) {
@@ -118,7 +133,6 @@ export async function GET(
       })
     }
 
-    // No address -- return all certificates in this postcode
     return NextResponse.json({
       found: true,
       postcode,
@@ -143,10 +157,10 @@ export async function GET(
       return NextResponse.json(
         {
           found: false,
-          error: 'EPC API authentication failed',
+          apiRetired: true,
           message: isScotland
             ? 'Scottish EPC API key rejected -- check EPC_SCOTLAND_API_KEY in .env.local.'
-            : 'EPC API credentials rejected -- check EPC_API_EMAIL and EPC_API_KEY in .env.local.',
+            : `EPC API authentication failed. ${MIGRATION_NOTE}`,
         },
         { status: 200 }
       )
@@ -154,29 +168,20 @@ export async function GET(
 
     if (isTimeout) {
       return NextResponse.json(
-        {
-          found: false,
-          message: 'EPC Register API timed out. The service may be temporarily slow -- try again in a moment.',
-        },
+        { found: false, message: 'EPC Register API timed out. Try again in a moment.' },
         { status: 200 }
       )
     }
 
     if (isNetworkError) {
       return NextResponse.json(
-        {
-          found: false,
-          message: 'Could not reach the EPC Register API. Check your internet connection.',
-        },
+        { found: false, message: 'Could not reach the EPC Register API. Check your internet connection.' },
         { status: 200 }
       )
     }
 
     return NextResponse.json(
-      {
-        found: false,
-        message: `EPC lookup failed: ${message}`,
-      },
+      { found: false, message: `EPC lookup failed: ${message}` },
       { status: 200 }
     )
   }
